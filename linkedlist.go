@@ -375,9 +375,12 @@ func split(head *llNode) (left, right *llNode) {
 	}
 	right = head
 	sprinter := head
+	prev := head
 	for sprinter != nil && sprinter.next != nil {
+		prev = right
 		right = right.next
 		sprinter = sprinter.next.next
 	}
+	prev.next = nil
 	return
 }

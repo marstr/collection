@@ -64,14 +64,20 @@ func TestSplit_Odd(t *testing.T) {
 		t.Fail()
 	} else if left.payload != 1 {
 		t.Logf("got: %d\n want: %d", left.payload, 1)
+		t.Fail()
+	} else if last := findLast(left).payload; last != 2 {
+		t.Logf("got:\n%d\nwant:\n%d", last, 2)
+		t.Fail()
 	}
 
 	if right == nil {
 		t.Logf("unexpected nil value for right")
 		t.Fail()
 	} else if right.payload != 3 {
-		t.Logf("got: %d\n want: %d", right.payload, 3)
+		t.Logf("got:\n%d\nwant:\n%d", right.payload, 3)
 		t.Fail()
+	} else if last := findLast(right).payload; last != 5 {
+		t.Logf("got:\n%d\nwant:%d", last, 5)
 	}
 }
 
@@ -106,6 +112,11 @@ func TestSplit_Single(t *testing.T) {
 
 	if right != nil {
 		t.Logf("got: %v\nwant: %v", right, nil)
+		t.Fail()
+	}
+
+	if last := findLast(left).payload; last != 1 {
+		t.Logf("got:\n%d\nwant:\n%d", last, 1)
 		t.Fail()
 	}
 }
@@ -217,6 +228,18 @@ func TestMerge_BothPopulated(t *testing.T) {
 	}
 }
 
+func TestMerge_BothEmpty(t *testing.T) {
+	result, err := merge(nil, nil, UncheckedComparatori)
+	if result != nil {
+		t.Logf("got:\n%v\nwant:\n%v\n", result, nil)
+		t.Fail()
+	}
+	if err != nil {
+		t.Logf("got:\n%v\nwant:\n%v\n", result, nil)
+		t.Fail()
+	}
+}
+
 func ExampleLinkedList_Sorta() {
 	subject := NewLinkedList("charlie", "alfa", "bravo", "delta")
 	subject.Sorta()
@@ -234,5 +257,5 @@ func ExampleLinkedList_Sorti() {
 	subject := NewLinkedList(7, 3, 2, 2, 3, 6)
 	subject.Sorti()
 	fmt.Println(subject.ToSlice())
-	// Output: [2, 2, 3, 3, 6, 7]
+	// Output: [2 2 3 3 6 7]
 }
