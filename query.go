@@ -1,7 +1,16 @@
 package collection
 
+// Enumerable exposes a new syntax for querying familiar data structures.
 type Enumerable struct {
 	output chan interface{}
+}
+
+// Any tests an Enumerable to see if there are any elements present.
+func (iter *Enumerable) Any() bool {
+	for range iter.output {
+		return true
+	}
+	return false
 }
 
 // AsEnumerable allows for easy conversion to an Enumerable from a slice.
@@ -65,6 +74,11 @@ func (iter *Enumerable) Select(transform func(interface{}) interface{}) *Enumera
 	}()
 
 	return retval
+}
+
+// ToChannel allows for conversion to use with traditional "range" syntax
+func (iter *Enumerable) ToChannel() <-chan interface{} {
+	return iter.output
 }
 
 // ToSlice places all iterated over values in a Slice for easy consumption.

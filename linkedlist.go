@@ -83,6 +83,27 @@ func (list *LinkedList) AddFront(entry interface{}) {
 	list.first = toAppend
 }
 
+// Enumerate creates a new instance of Enumerable which can be executed on.
+func (list *LinkedList) Enumerate() *Enumerable {
+	retval := &Enumerable{
+		output: make(chan interface{}),
+	}
+
+	go func() {
+		list.key.RLock()
+		defer list.key.RUnlock()
+
+		current := list.first
+		for current != nil {
+			retval.output <- current.payload
+			current = current.next
+		}
+		close(retval.output)
+	}()
+
+	return retval
+}
+
 // Get finds the value from the LinkedList.
 // pos is expressed as a zero-based index begining from the 'front' of the list.
 func (list *LinkedList) Get(pos uint) (interface{}, bool) {

@@ -22,6 +22,21 @@ func ExampleLinkedList_AddBack() {
 	// 4
 }
 
+func ExampleLinkedList_Enumerate() {
+	subject := NewLinkedList(2, 3, 5, 8)
+	results := subject.Enumerate().Select(func(a interface{}) interface{} {
+		return -1 * a.(int)
+	})
+	for entry := range results.ToChannel() {
+		fmt.Println(entry)
+	}
+	// Output:
+	// -2
+	// -3
+	// -5
+	// -8
+}
+
 func ExampleLinkedList_Get() {
 	subject := NewLinkedList(2, 3, 5, 8)
 	val, _ := subject.Get(2)

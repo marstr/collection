@@ -2,6 +2,25 @@ package collection
 
 import "fmt"
 
+func ExampleEnumerable_Any() {
+	empty := AsEnumerable()
+	if empty.Any() {
+		fmt.Println("Empty had some")
+	} else {
+		fmt.Println("Empty had none")
+	}
+
+	populated := AsEnumerable("str1")
+	if populated.Any() {
+		fmt.Println("Populated had some")
+	} else {
+		fmt.Println("Populated had none")
+	}
+	// Output:
+	// Empty had none
+	// Populated had some
+}
+
 func ExampleEnumerable_Count() {
 	subject := AsEnumerable("str1", "str1", "str2")
 	count1 := subject.Count(func(a interface{}) bool {
@@ -20,9 +39,25 @@ func ExampleEnumerable_CountAll() {
 func ExampleEnumerable_Select() {
 	subject := AsEnumerable('a', 'b', 'c')
 	const offset = 'a' - 1
-	results := subject.Select(func(a interface{}) interface{} { return a.(rune) - offset }).ToSlice()
-	fmt.Println(results)
+	results := subject.Select(func(a interface{}) interface{} {
+		return a.(rune) - offset
+	})
+
+	fmt.Println(results.ToSlice())
 	// Output: [1 2 3]
+}
+
+func ExampleEnumerable_ToChannel() {
+	subject := AsEnumerable(1, 2, 3, 4)
+	filtered := subject.Where(func(a interface{}) bool {
+		return a.(int) > 2
+	})
+	for entry := range filtered.ToChannel() {
+		fmt.Println(entry)
+	}
+	// Output:
+	// 3
+	// 4
 }
 
 func ExampleEnumerable_UCount() {
