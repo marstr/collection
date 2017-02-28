@@ -22,6 +22,19 @@ func ExampleLinkedList_AddBack() {
 	// 4
 }
 
+func ExampleLinkedList_Get() {
+	subject := NewLinkedList(2, 3, 5, 8)
+	val, _ := subject.Get(2)
+	fmt.Println(val)
+	// Output: 5
+}
+
+func ExampleLinkedList_Get_OutsideBounds() {
+	subject := NewLinkedList(2, 3, 5, 8, 13, 21)
+	fmt.Print(subject.Get(10))
+	// Output: <nil> false
+}
+
 func ExampleNewLinkedList() {
 	subject1 := NewLinkedList('a', 'b', 'c', 'd', 'e')
 	fmt.Println(subject1.Length())

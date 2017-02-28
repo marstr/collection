@@ -90,7 +90,10 @@ func (list *LinkedList) Get(pos uint) (interface{}, bool) {
 	list.key.RLock()
 	defer list.key.RUnlock()
 	node, ok := get(list.first, pos)
-	return node.payload, ok
+	if ok {
+		return node.payload, true
+	}
+	return nil, false
 }
 
 // IsEmpty tests the list to determine if it is populate or not.
