@@ -29,7 +29,6 @@ type Comparator func(a, b interface{}) (int, error)
 
 // A collection of errors that may be thrown by functions in this file.
 var (
-	ErrListIsEmpty    = errors.New("targeted list is empty")
 	ErrUnexpectedType = errors.New("value was of an unexpected type")
 )
 
@@ -113,34 +112,34 @@ func (list *LinkedList) Length() uint {
 }
 
 // PeekBack returns the entry logicall stored at the back of the list without removing it.
-func (list *LinkedList) PeekBack() (interface{}, error) {
+func (list *LinkedList) PeekBack() (interface{}, bool) {
 	list.key.RLock()
 	defer list.key.RUnlock()
 
 	if list.last == nil {
-		return nil, ErrListIsEmpty
+		return nil, false
 	}
-	return list.last.payload, nil
+	return list.last.payload, true
 }
 
 // PeekFront returns the entry logically stored at the front of this list without removing it.
-func (list *LinkedList) PeekFront() (interface{}, error) {
+func (list *LinkedList) PeekFront() (interface{}, bool) {
 	list.key.RLock()
 	defer list.key.RUnlock()
 
 	if list.first == nil {
-		return nil, ErrListIsEmpty
+		return nil, false
 	}
-	return list.first.payload, nil
+	return list.first.payload, true
 }
 
 // RemoveFront returns the entry logically stored at the front of this list and removes it.
-func (list *LinkedList) RemoveFront() (interface{}, error) {
+func (list *LinkedList) RemoveFront() (interface{}, bool) {
 	list.key.Lock()
 	defer list.key.Unlock()
 
 	if list.first == nil {
-		return nil, ErrListIsEmpty
+		return nil, false
 	}
 
 	retval := list.first.payload
@@ -152,16 +151,16 @@ func (list *LinkedList) RemoveFront() (interface{}, error) {
 		list.last = nil
 	}
 
-	return retval, nil
+	return retval, true
 }
 
 // RemoveBack returns the entry logically stored at the back of this list and removes it.
-func (list *LinkedList) RemoveBack() (interface{}, error) {
+func (list *LinkedList) RemoveBack() (interface{}, bool) {
 	list.key.Lock()
 	defer list.key.Unlock()
 
 	if list.last == nil {
-		return nil, ErrListIsEmpty
+		return nil, false
 	}
 
 	retval := list.last.payload
@@ -173,7 +172,7 @@ func (list *LinkedList) RemoveBack() (interface{}, error) {
 		node, _ := get(list.first, list.length-1)
 		node.next = nil
 	}
-	return retval, nil
+	return retval, true
 }
 
 // Sort rearranges the positions of the entries in this list so that they are

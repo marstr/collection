@@ -40,18 +40,18 @@ func (stack *Stack) Push(entry interface{}) {
 }
 
 // Pop returns the entry at the top of the Stack then removes it.
-func (stack *Stack) Pop() (interface{}, error) {
+func (stack *Stack) Pop() (interface{}, bool) {
 	stack.key.Lock()
 	defer stack.key.Unlock()
 
 	if nil == stack.underlyer {
-		return nil, ErrListIsEmpty
+		return nil, false
 	}
 	return stack.underlyer.RemoveFront()
 }
 
 // Peek returns the entry at the top of the Stack without removing it.
-func (stack *Stack) Peek() (interface{}, error) {
+func (stack *Stack) Peek() (interface{}, bool) {
 	stack.key.RLock()
 	defer stack.key.RUnlock()
 	return stack.underlyer.PeekFront()

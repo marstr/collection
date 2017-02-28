@@ -46,21 +46,21 @@ func (q *Queue) Length() uint {
 }
 
 // Next removes and returns the next item in the Queue.
-func (q *Queue) Next() (interface{}, error) {
+func (q *Queue) Next() (interface{}, bool) {
 	q.key.Lock()
 	defer q.key.Unlock()
 	if q.underlyer == nil {
-		return nil, ErrListIsEmpty
+		return nil, false
 	}
 	return q.underlyer.RemoveFront()
 }
 
 // Peek returns the next item in the Queue without removing it.
-func (q *Queue) Peek() (interface{}, error) {
+func (q *Queue) Peek() (interface{}, bool) {
 	q.key.RLock()
 	defer q.key.RUnlock()
 	if q.underlyer == nil {
-		return nil, ErrListIsEmpty
+		return nil, false
 	}
 	return q.underlyer.PeekFront()
 }

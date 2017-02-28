@@ -54,8 +54,9 @@ func ExampleQueue_Next() {
 func TestQueue_Peek_DoesntRemove(t *testing.T) {
 	expected := []interface{}{1, 2, 3}
 	subject := NewQueue(expected...)
-	if result, err := subject.Peek(); err != nil {
-		t.Error(err)
+	if result, ok := subject.Peek(); !ok {
+		t.Logf("no item present")
+		t.Fail()
 	} else if result != expected[0] {
 		t.Logf("got: %d\nwant: %d", result, 1)
 		t.Fail()
