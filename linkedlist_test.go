@@ -25,7 +25,13 @@ func ExampleLinkedList_AddBack() {
 func ExampleNewLinkedList() {
 	subject1 := NewLinkedList('a', 'b', 'c', 'd', 'e')
 	fmt.Println(subject1.Length())
-	// Output: 5
+
+	slice := []interface{}{1, 2, 3, 4, 5, 6}
+	subject2 := NewLinkedList(slice...)
+	fmt.Println(subject2.Length())
+	// Output:
+	// 5
+	// 6
 }
 
 func TestSplit_Even(t *testing.T) {
@@ -212,8 +218,7 @@ func TestMerge_BothPopulated(t *testing.T) {
 }
 
 func ExampleLinkedList_Sorta() {
-	//subject := NewLinkedList("charlie", "alfa", "bravo", "delta")
-	subject := NewLinkedList("foo", "bar")
+	subject := NewLinkedList("charlie", "alfa", "bravo", "delta")
 	subject.Sorta()
 	for _, entry := range subject.ToSlice() {
 		fmt.Println(entry.(string))
