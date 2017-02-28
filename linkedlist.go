@@ -84,6 +84,15 @@ func (list *LinkedList) AddFront(entry interface{}) {
 	list.first = toAppend
 }
 
+// Get finds the value from the LinkedList.
+// pos is expressed as a zero-based index begining from the 'front' of the list.
+func (list *LinkedList) Get(pos uint) (interface{}, bool) {
+	list.key.RLock()
+	defer list.key.RUnlock()
+	node, ok := get(list.first, pos)
+	return node.payload, ok
+}
+
 // IsEmpty tests the list to determine if it is populate or not.
 func (list *LinkedList) IsEmpty() bool {
 	list.key.RLock()
@@ -158,12 +167,8 @@ func (list *LinkedList) RemoveBack() (interface{}, error) {
 	if list.length == 0 {
 		list.first = nil
 	} else {
-		current := list.first
-		endIndex := list.length - uint(1)
-		for i := uint(0); i < endIndex; i++ {
-			current = current.next
-		}
-		current.next = nil
+		node, _ := get(list.first, list.length-1)
+		node.next = nil
 	}
 	return retval, nil
 }
@@ -258,30 +263,16 @@ func (list *LinkedList) Swap(x, y uint) error {
 	list.key.Lock()
 	defer list.key.Unlock()
 
-	if x >= list.length {
+	var xNode, yNode *llNode
+	if temp, ok := get(list.first, x); ok {
+		xNode = temp
+	} else {
 		return fmt.Errorf("index out of bounds 'x', wanted less than %d got %d", list.length, x)
 	}
-	if y >= list.length {
+	if temp, ok := get(list.first, y); ok {
+		yNode = temp
+	} else {
 		return fmt.Errorf("index out of bounds 'y', wanted less than %d got %d", list.length, y)
-	}
-
-	current := list.first
-
-	var xNode, yNode *llNode
-
-	i := uint(0)
-	for current != nil {
-		if i == x {
-			xNode = current
-		}
-		if i == y {
-			yNode = current
-		}
-		if xNode != nil && yNode != nil {
-			break
-		}
-		current = current.next
-		i++
 	}
 
 	temp := xNode.payload
@@ -315,6 +306,16 @@ func findLast(head *llNode) *llNode {
 		current = current.next
 	}
 	return current
+}
+
+func get(head *llNode, pos uint) (*llNode, bool) {
+	for i := uint(0); i < pos; i++ {
+		if head == nil {
+			return nil, false
+		}
+		head = head.next
+	}
+	return head, true
 }
 
 // merge takes two sorted lists and merges them into one sorted list.
