@@ -50,7 +50,7 @@ func ExampleLinkedList_Sort() {
 
 		return castB - castA, nil
 	})
-	fmt.Println(subject.ToSlice())
+	fmt.Println(subject)
 	// Output: [7 7 5 4 3 2]
 }
 
@@ -70,14 +70,29 @@ func ExampleLinkedList_Sorta() {
 func ExampleLinkedList_Sorti() {
 	subject := NewLinkedList(7, 3, 2, 2, 3, 6)
 	subject.Sorti()
-	fmt.Println(subject.ToSlice())
+	fmt.Println(subject)
 	// Output: [2 2 3 3 6 7]
+}
+
+func ExampleLinkedList_String() {
+	subject := NewLinkedList(1, 2, 3)
+	fmt.Println(subject)
+	// Output: [1 2 3]
+}
+
+func ExampleLinkedList_String_Long() {
+	subject := NewLinkedList()
+	for i := 0; i < 20; i++ {
+		subject.AddBack(i)
+	}
+	fmt.Println(subject)
+	// Output: [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 ...]
 }
 
 func ExampleLinkedList_Swap() {
 	subject := NewLinkedList(2, 3, 5, 8, 13)
 	subject.Swap(1, 3)
-	fmt.Println(subject.ToSlice())
+	fmt.Println(subject)
 	// Output: [2 8 5 3 13]
 }
 

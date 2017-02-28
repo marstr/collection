@@ -6,14 +6,36 @@ import (
 
 // Stack implements a basic FILO structure.
 type Stack struct {
-	underlyer LinkedList
+	underlyer *LinkedList
 	key       sync.RWMutex
+}
+
+// NewStack instantiates a new FILO structure.
+func NewStack(entries ...interface{}) *Stack {
+	retval := &Stack{}
+	retval.underlyer = NewLinkedList()
+
+	for _, entry := range entries {
+		retval.Push(entry)
+	}
+	return retval
+}
+
+// IsEmpty tests the Stack to determine if it is populate or not.
+func (stack *Stack) IsEmpty() bool {
+	stack.key.RLock()
+	defer stack.key.RUnlock()
+	return stack.underlyer == nil || stack.underlyer.IsEmpty()
 }
 
 // Push adds an entry to the top of the Stack.
 func (stack *Stack) Push(entry interface{}) {
 	stack.key.Lock()
 	defer stack.key.Unlock()
+
+	if nil == stack.underlyer {
+		stack.underlyer = NewLinkedList()
+	}
 	stack.underlyer.AddFront(entry)
 }
 
@@ -21,6 +43,10 @@ func (stack *Stack) Push(entry interface{}) {
 func (stack *Stack) Pop() (interface{}, error) {
 	stack.key.Lock()
 	defer stack.key.Unlock()
+
+	if nil == stack.underlyer {
+		return nil, ErrListIsEmpty
+	}
 	return stack.underlyer.RemoveFront()
 }
 
@@ -29,4 +55,14 @@ func (stack *Stack) Peek() (interface{}, error) {
 	stack.key.RLock()
 	defer stack.key.RUnlock()
 	return stack.underlyer.PeekFront()
+}
+
+// Size returns the number of entries populating the Stack.
+func (stack *Stack) Size() uint {
+	stack.key.RLock()
+	defer stack.key.RUnlock()
+	if stack.underlyer == nil {
+		return 0
+	}
+	return stack.underlyer.Length()
 }

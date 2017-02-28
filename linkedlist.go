@@ -1,6 +1,7 @@
 package collection
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"strings"
@@ -75,12 +76,11 @@ func (list *LinkedList) AddFront(entry interface{}) {
 
 	list.length++
 
+	toAppend.next = list.first
 	if list.first == nil {
-		list.first = toAppend
 		list.last = toAppend
 	}
 
-	toAppend.next = list.first
 	list.first = toAppend
 }
 
@@ -229,6 +229,27 @@ func (list *LinkedList) Sorti() error {
 	}
 	list.last = findLast(list.first)
 	return err
+}
+
+// String prints upto the first fifteen elements of the list in string format.
+func (list *LinkedList) String() string {
+	list.key.RLock()
+	defer list.key.RUnlock()
+
+	builder := bytes.NewBufferString("[")
+	current := list.first
+	for i := 0; i < 15 && current != nil; i++ {
+		builder.WriteString(fmt.Sprintf("%v", current.payload))
+		builder.WriteRune(' ')
+		current = current.next
+	}
+	if current == nil || current.next == nil {
+		builder.Truncate(builder.Len() - 1)
+	} else {
+		builder.WriteString("...")
+	}
+	builder.WriteRune(']')
+	return builder.String()
 }
 
 // Swap switches the positions in which two values are stored in this list.

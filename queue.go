@@ -10,19 +10,38 @@ type Queue struct {
 	key       sync.RWMutex
 }
 
+// NewQueue instantiates a new FIFO structure.
+func NewQueue(entries ...interface{}) *Queue {
+	retval := &Queue{
+		underlyer: NewLinkedList(entries...),
+	}
+	return retval
+}
+
 // Add places an item at the back of the Queue.
 func (q *Queue) Add(entry interface{}) {
 	q.key.Lock()
 	defer q.key.Unlock()
-
+	if nil == q.underlyer {
+		q.underlyer = NewLinkedList()
+	}
 	q.underlyer.AddBack(entry)
+}
+
+// IsEmpty tests the Queue to determine if it is populate or not.
+func (q *Queue) IsEmpty() bool {
+	q.key.RLock()
+	defer q.key.RUnlock()
+	return q.underlyer == nil || q.underlyer.IsEmpty()
 }
 
 // Length returns the number of items in the Queue.
 func (q *Queue) Length() uint {
 	q.key.RLock()
 	defer q.key.RUnlock()
-
+	if nil == q.underlyer {
+		return 0
+	}
 	return q.underlyer.length
 }
 
@@ -30,7 +49,9 @@ func (q *Queue) Length() uint {
 func (q *Queue) Next() (interface{}, error) {
 	q.key.Lock()
 	defer q.key.Unlock()
-
+	if q.underlyer == nil {
+		return nil, ErrListIsEmpty
+	}
 	return q.underlyer.RemoveFront()
 }
 
@@ -38,6 +59,19 @@ func (q *Queue) Next() (interface{}, error) {
 func (q *Queue) Peek() (interface{}, error) {
 	q.key.RLock()
 	defer q.key.RUnlock()
-
+	if q.underlyer == nil {
+		return nil, ErrListIsEmpty
+	}
 	return q.underlyer.PeekFront()
+}
+
+// ToSlice converts a Queue into a slice.
+func (q *Queue) ToSlice() []interface{} {
+	q.key.RLock()
+	defer q.key.RUnlock()
+
+	if q.underlyer == nil {
+		return []interface{}{}
+	}
+	return q.underlyer.ToSlice()
 }
