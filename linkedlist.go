@@ -343,7 +343,7 @@ func merge(left, right *llNode, comparator Comparator) (first *llNode, err error
 	for curLeft != nil && curRight != nil {
 		var res int
 		if res, err = comparator(curLeft.payload, curRight.payload); nil != err {
-			return
+			break // Don't return, stitch the remaining elements back on.
 		} else if res < 0 {
 			appendResults(curLeft)
 			curLeft = curLeft.next
