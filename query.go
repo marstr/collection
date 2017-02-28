@@ -76,6 +76,27 @@ func (iter *Enumerable) Select(transform func(interface{}) interface{}) *Enumera
 	return retval
 }
 
+// Tee splits athe results of a channel so that mulptiple actions can be taken on it.
+func (iter *Enumerable) Tee() (*Enumerable, *Enumerable) {
+	left := &Enumerable{
+		output: make(chan interface{}),
+	}
+	right := &Enumerable{
+		output: make(chan interface{}),
+	}
+
+	go func() {
+		for entry := range iter.output {
+			left.output <- entry
+			right.output <- entry
+		}
+		close(left.output)
+		close(right.output)
+	}()
+
+	return left, right
+}
+
 // ToChannel allows for conversion to use with traditional "range" syntax
 func (iter *Enumerable) ToChannel() <-chan interface{} {
 	return iter.output

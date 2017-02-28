@@ -2,6 +2,8 @@ package collection
 
 import "fmt"
 
+import "sync"
+
 func ExampleEnumerable_Any() {
 	empty := AsEnumerable()
 	if empty.Any() {
@@ -45,6 +47,31 @@ func ExampleEnumerable_Select() {
 
 	fmt.Println(results.ToSlice())
 	// Output: [1 2 3]
+}
+
+func ExampleEnumerable_Tee() {
+	base := AsEnumerable(1, 2, 4)
+	left, right := base.Tee()
+
+	var wg sync.WaitGroup
+
+	var sumKey sync.Mutex
+	sum := 0
+	findSum := func(e *Enumerable) {
+		defer wg.Done()
+		for entry := range e.ToChannel() {
+			sumKey.Lock()
+			sum += entry.(int)
+			sumKey.Unlock()
+		}
+	}
+	wg.Add(2)
+	go findSum(left)
+	go findSum(right)
+	wg.Wait()
+
+	fmt.Println(sum)
+	//Output: 14
 }
 
 func ExampleEnumerable_ToChannel() {
