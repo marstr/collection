@@ -241,7 +241,7 @@ func (list *LinkedList) Swap(x, y uint) error {
 		return fmt.Errorf("index out of bounds 'x', wanted less than %d got %d", list.length, x)
 	}
 	if y >= list.length {
-		return fmt.Errorf("index out of bound 'y', wanted less than %d got %d", list.length, y)
+		return fmt.Errorf("index out of bounds 'y', wanted less than %d got %d", list.length, y)
 	}
 
 	current := list.first
@@ -259,6 +259,7 @@ func (list *LinkedList) Swap(x, y uint) error {
 		if xNode != nil && yNode != nil {
 			break
 		}
+		current = current.next
 		i++
 	}
 

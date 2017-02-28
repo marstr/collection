@@ -34,6 +34,53 @@ func ExampleNewLinkedList() {
 	// 6
 }
 
+func ExampleLinkedList_Sort() {
+	// Sorti sorts into ascending order, this example demonstrates sorting
+	// into descending order.
+	subject := NewLinkedList(2, 4, 3, 5, 7, 7)
+	subject.Sort(func(a, b interface{}) (int, error) {
+		castA, ok := a.(int)
+		if !ok {
+			return 0, ErrUnexpectedType
+		}
+		castB, ok := b.(int)
+		if !ok {
+			return 0, ErrUnexpectedType
+		}
+
+		return castB - castA, nil
+	})
+	fmt.Println(subject.ToSlice())
+	// Output: [7 7 5 4 3 2]
+}
+
+func ExampleLinkedList_Sorta() {
+	subject := NewLinkedList("charlie", "alfa", "bravo", "delta")
+	subject.Sorta()
+	for _, entry := range subject.ToSlice() {
+		fmt.Println(entry.(string))
+	}
+	// Output:
+	// alfa
+	// bravo
+	// charlie
+	// delta
+}
+
+func ExampleLinkedList_Sorti() {
+	subject := NewLinkedList(7, 3, 2, 2, 3, 6)
+	subject.Sorti()
+	fmt.Println(subject.ToSlice())
+	// Output: [2 2 3 3 6 7]
+}
+
+func ExampleLinkedList_Swap() {
+	subject := NewLinkedList(2, 3, 5, 8, 13)
+	subject.Swap(1, 3)
+	fmt.Println(subject.ToSlice())
+	// Output: [2 8 5 3 13]
+}
+
 func TestSplit_Even(t *testing.T) {
 	subject := NewLinkedList(1, 2, 3, 4)
 
@@ -238,24 +285,4 @@ func TestMerge_BothEmpty(t *testing.T) {
 		t.Logf("got:\n%v\nwant:\n%v\n", result, nil)
 		t.Fail()
 	}
-}
-
-func ExampleLinkedList_Sorta() {
-	subject := NewLinkedList("charlie", "alfa", "bravo", "delta")
-	subject.Sorta()
-	for _, entry := range subject.ToSlice() {
-		fmt.Println(entry.(string))
-	}
-	// Output:
-	// alfa
-	// bravo
-	// charlie
-	// delta
-}
-
-func ExampleLinkedList_Sorti() {
-	subject := NewLinkedList(7, 3, 2, 2, 3, 6)
-	subject.Sorti()
-	fmt.Println(subject.ToSlice())
-	// Output: [2 2 3 3 6 7]
 }
