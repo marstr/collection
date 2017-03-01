@@ -84,7 +84,7 @@ func (list *LinkedList) AddFront(entry interface{}) {
 }
 
 // Enumerate creates a new instance of Enumerable which can be executed on.
-func (list *LinkedList) Enumerate() Enumerable {
+func (list *LinkedList) Enumerate() Enumerator {
 	retval := make(chan interface{})
 
 	go func() {

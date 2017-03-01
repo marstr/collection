@@ -1,18 +1,27 @@
 package collection
 
-// Enumerable exposes a new syntax for querying familiar data structures.
-type Enumerable <-chan interface{}
+// Enumerable offers a means of easily converting into a channel. It is most
+// useful for types where mutability is not in question.
+type Enumerable interface {
+	Enumerate() <-chan interface{}
+}
 
-// Any tests an Enumerable to see if there are any elements present.
-func (iter Enumerable) Any() bool {
+// Enumerator exposes a new syntax for querying familiar data structures.
+type Enumerator <-chan interface{}
+
+// Predicate defines an interface for funcs that make some logical test.
+type Predicate func(interface{}) bool
+
+// Any tests an Enumerator to see if there are any elements present.
+func (iter Enumerator) Any() bool {
 	for range iter {
 		return true
 	}
 	return false
 }
 
-// AsEnumerable allows for easy conversion to an Enumerable from a slice.
-func AsEnumerable(entries ...interface{}) Enumerable {
+// AsEnumerator allows for easy conversion to an Enumerator from a slice.
+func AsEnumerator(entries ...interface{}) Enumerator {
 	retval := make(chan interface{})
 
 	go func() {
@@ -25,12 +34,9 @@ func AsEnumerable(entries ...interface{}) Enumerable {
 	return retval
 }
 
-// Predicate defines an interface for funcs that make some logical test.
-type Predicate func(interface{}) bool
-
 // Count iterates over a list and keeps a running tally of the number of elements
 // satisfy a predicate.
-func (iter Enumerable) Count(p Predicate) int {
+func (iter Enumerator) Count(p Predicate) int {
 	tally := 0
 	for entry := range iter {
 		if p(entry) {
@@ -41,7 +47,7 @@ func (iter Enumerable) Count(p Predicate) int {
 }
 
 // CountAll iterates over a list and keeps a running tally of how many it's seen.
-func (iter Enumerable) CountAll() int {
+func (iter Enumerator) CountAll() int {
 	tally := 0
 	for range iter {
 		tally++
@@ -50,7 +56,7 @@ func (iter Enumerable) CountAll() int {
 }
 
 // Select iterates over a list and returns a transformed item.
-func (iter Enumerable) Select(transform func(interface{}) interface{}) Enumerable {
+func (iter Enumerator) Select(transform func(interface{}) interface{}) Enumerator {
 	retval := make(chan interface{})
 
 	go func() {
@@ -64,7 +70,7 @@ func (iter Enumerable) Select(transform func(interface{}) interface{}) Enumerabl
 }
 
 // Tee splits athe results of a channel so that mulptiple actions can be taken on it.
-func (iter Enumerable) Tee() (Enumerable, Enumerable) {
+func (iter Enumerator) Tee() (Enumerator, Enumerator) {
 	left := make(chan interface{})
 	right := make(chan interface{})
 
@@ -81,7 +87,7 @@ func (iter Enumerable) Tee() (Enumerable, Enumerable) {
 }
 
 // ToSlice places all iterated over values in a Slice for easy consumption.
-func (iter Enumerable) ToSlice() []interface{} {
+func (iter Enumerator) ToSlice() []interface{} {
 	retval := make([]interface{}, 0)
 	for entry := range iter {
 		retval = append(retval, entry)
@@ -91,7 +97,7 @@ func (iter Enumerable) ToSlice() []interface{} {
 
 // Where iterates over a list and returns only the elements that satisfy a
 // predicate.
-func (iter Enumerable) Where(predicate Predicate) Enumerable {
+func (iter Enumerator) Where(predicate Predicate) Enumerator {
 	retval := make(chan interface{})
 	go func() {
 		for item := range iter {
@@ -107,7 +113,7 @@ func (iter Enumerable) Where(predicate Predicate) Enumerable {
 
 // UCount iterates over a list and keeps a running tally of the number of elements
 // satisfy a predicate.
-func (iter Enumerable) UCount(p Predicate) uint {
+func (iter Enumerator) UCount(p Predicate) uint {
 	tally := uint(0)
 	for entry := range iter {
 		if p(entry) {
@@ -118,7 +124,7 @@ func (iter Enumerable) UCount(p Predicate) uint {
 }
 
 // UCountAll iterates over a list and keeps a running tally of how many it's seen.
-func (iter Enumerable) UCountAll() uint {
+func (iter Enumerator) UCountAll() uint {
 	tally := uint(0)
 	for range iter {
 		tally++

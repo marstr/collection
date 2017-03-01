@@ -41,7 +41,7 @@ func (l *List) AddAt(position uint, entries ...interface{}) {
 }
 
 // Enumerate lists each element present in the collection
-func (l *List) Enumerate() Enumerable {
+func (l *List) Enumerate() Enumerator {
 	retval := make(chan interface{})
 
 	go func() {

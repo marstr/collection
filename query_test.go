@@ -5,14 +5,14 @@ import "fmt"
 import "sync"
 
 func ExampleEnumerable_Any() {
-	empty := AsEnumerable()
+	empty := AsEnumerator()
 	if empty.Any() {
 		fmt.Println("Empty had some")
 	} else {
 		fmt.Println("Empty had none")
 	}
 
-	populated := AsEnumerable("str1")
+	populated := AsEnumerator("str1")
 	if populated.Any() {
 		fmt.Println("Populated had some")
 	} else {
@@ -24,7 +24,7 @@ func ExampleEnumerable_Any() {
 }
 
 func ExampleEnumerable_Count() {
-	subject := AsEnumerable("str1", "str1", "str2")
+	subject := AsEnumerator("str1", "str1", "str2")
 	count1 := subject.Count(func(a interface{}) bool {
 		return a == "str1"
 	})
@@ -33,13 +33,13 @@ func ExampleEnumerable_Count() {
 }
 
 func ExampleEnumerable_CountAll() {
-	subject := AsEnumerable('a', 'b', 'c', 'd', 'e')
+	subject := AsEnumerator('a', 'b', 'c', 'd', 'e')
 	fmt.Println(subject.CountAll())
 	// Ouput: 5
 }
 
 func ExampleEnumerable_Select() {
-	subject := AsEnumerable('a', 'b', 'c')
+	subject := AsEnumerator('a', 'b', 'c')
 	const offset = 'a' - 1
 	results := subject.Select(func(a interface{}) interface{} {
 		return a.(rune) - offset
@@ -50,7 +50,7 @@ func ExampleEnumerable_Select() {
 }
 
 func ExampleEnumerable_Tee() {
-	base := AsEnumerable(1, 2, 4)
+	base := AsEnumerator(1, 2, 4)
 	left, right := base.Tee()
 
 	var wg sync.WaitGroup
@@ -75,7 +75,7 @@ func ExampleEnumerable_Tee() {
 }
 
 func ExampleEnumerable_UCount() {
-	subject := AsEnumerable("str1", "str1", "str2")
+	subject := AsEnumerator("str1", "str1", "str2")
 	count1 := subject.UCount(func(a interface{}) bool {
 		return a == "str1"
 	})
@@ -84,13 +84,13 @@ func ExampleEnumerable_UCount() {
 }
 
 func ExampleEnumerable_UCountAll() {
-	subject := AsEnumerable('a', 2, "str1")
+	subject := AsEnumerator('a', 2, "str1")
 	fmt.Println(subject.UCountAll())
 	// Output: 3
 }
 
 func ExampleEnumerable_Where() {
-	subject := AsEnumerable(1, 2, 3, 5, 8, 13, 21, 34)
+	subject := AsEnumerator(1, 2, 3, 5, 8, 13, 21, 34)
 	results := subject.Where(func(a interface{}) bool { return a.(int) > 8 }).ToSlice()
 	fmt.Println(results)
 	// Output: [13 21 34]
