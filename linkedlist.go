@@ -265,8 +265,7 @@ func (list *LinkedList) String() string {
 	builder := bytes.NewBufferString("[")
 	current := list.first
 	for i := 0; i < 15 && current != nil; i++ {
-		builder.WriteString(fmt.Sprintf("%v", current.payload))
-		builder.WriteRune(' ')
+		builder.WriteString(fmt.Sprintf("%v ", current.payload))
 		current = current.next
 	}
 	if current == nil || current.next == nil {
