@@ -57,9 +57,9 @@ func ExampleEnumerable_Tee() {
 
 	var sumKey sync.Mutex
 	sum := 0
-	findSum := func(e *Enumerable) {
+	findSum := func(e <-chan interface{}) {
 		defer wg.Done()
-		for entry := range e.ToChannel() {
+		for entry := range e {
 			sumKey.Lock()
 			sum += entry.(int)
 			sumKey.Unlock()
@@ -72,19 +72,6 @@ func ExampleEnumerable_Tee() {
 
 	fmt.Println(sum)
 	//Output: 14
-}
-
-func ExampleEnumerable_ToChannel() {
-	subject := AsEnumerable(1, 2, 3, 4)
-	filtered := subject.Where(func(a interface{}) bool {
-		return a.(int) > 2
-	})
-	for entry := range filtered.ToChannel() {
-		fmt.Println(entry)
-	}
-	// Output:
-	// 3
-	// 4
 }
 
 func ExampleEnumerable_UCount() {

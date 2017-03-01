@@ -84,10 +84,8 @@ func (list *LinkedList) AddFront(entry interface{}) {
 }
 
 // Enumerate creates a new instance of Enumerable which can be executed on.
-func (list *LinkedList) Enumerate() *Enumerable {
-	retval := &Enumerable{
-		output: make(chan interface{}),
-	}
+func (list *LinkedList) Enumerate() Enumerable {
+	retval := make(chan interface{})
 
 	go func() {
 		list.key.RLock()
@@ -95,10 +93,10 @@ func (list *LinkedList) Enumerate() *Enumerable {
 
 		current := list.first
 		for current != nil {
-			retval.output <- current.payload
+			retval <- current.payload
 			current = current.next
 		}
-		close(retval.output)
+		close(retval)
 	}()
 
 	return retval

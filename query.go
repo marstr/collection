@@ -1,29 +1,25 @@
 package collection
 
 // Enumerable exposes a new syntax for querying familiar data structures.
-type Enumerable struct {
-	output chan interface{}
-}
+type Enumerable <-chan interface{}
 
 // Any tests an Enumerable to see if there are any elements present.
-func (iter *Enumerable) Any() bool {
-	for range iter.output {
+func (iter Enumerable) Any() bool {
+	for range iter {
 		return true
 	}
 	return false
 }
 
 // AsEnumerable allows for easy conversion to an Enumerable from a slice.
-func AsEnumerable(entries ...interface{}) *Enumerable {
-	retval := &Enumerable{
-		output: make(chan interface{}),
-	}
+func AsEnumerable(entries ...interface{}) Enumerable {
+	retval := make(chan interface{})
 
 	go func() {
 		for _, entry := range entries {
-			retval.output <- entry
+			retval <- entry
 		}
-		close(retval.output)
+		close(retval)
 	}()
 
 	return retval
@@ -32,18 +28,11 @@ func AsEnumerable(entries ...interface{}) *Enumerable {
 // Predicate defines an interface for funcs that make some logical test.
 type Predicate func(interface{}) bool
 
-// AsEnumerablec allows for easy conversion to an Enumerable from a chan.
-func AsEnumerablec(channel chan interface{}) *Enumerable {
-	return &Enumerable{
-		output: channel,
-	}
-}
-
 // Count iterates over a list and keeps a running tally of the number of elements
 // satisfy a predicate.
-func (iter *Enumerable) Count(p Predicate) int {
+func (iter Enumerable) Count(p Predicate) int {
 	tally := 0
-	for entry := range iter.output {
+	for entry := range iter {
 		if p(entry) {
 			tally++
 		}
@@ -52,60 +41,49 @@ func (iter *Enumerable) Count(p Predicate) int {
 }
 
 // CountAll iterates over a list and keeps a running tally of how many it's seen.
-func (iter *Enumerable) CountAll() int {
+func (iter Enumerable) CountAll() int {
 	tally := 0
-	for range iter.output {
+	for range iter {
 		tally++
 	}
 	return tally
 }
 
 // Select iterates over a list and returns a transformed item.
-func (iter *Enumerable) Select(transform func(interface{}) interface{}) *Enumerable {
-	retval := &Enumerable{
-		output: make(chan interface{}),
-	}
+func (iter Enumerable) Select(transform func(interface{}) interface{}) Enumerable {
+	retval := make(chan interface{})
 
 	go func() {
-		for item := range iter.output {
-			retval.output <- transform(item)
+		for item := range iter {
+			retval <- transform(item)
 		}
-		close(retval.output)
+		close(retval)
 	}()
 
 	return retval
 }
 
 // Tee splits athe results of a channel so that mulptiple actions can be taken on it.
-func (iter *Enumerable) Tee() (*Enumerable, *Enumerable) {
-	left := &Enumerable{
-		output: make(chan interface{}),
-	}
-	right := &Enumerable{
-		output: make(chan interface{}),
-	}
+func (iter Enumerable) Tee() (Enumerable, Enumerable) {
+	left := make(chan interface{})
+	right := make(chan interface{})
 
 	go func() {
-		for entry := range iter.output {
-			left.output <- entry
-			right.output <- entry
+		for entry := range iter {
+			left <- entry
+			right <- entry
 		}
-		close(left.output)
-		close(right.output)
+		close(left)
+		close(right)
 	}()
 
 	return left, right
 }
 
-// ToChannel allows for conversion to use with traditional "range" syntax
-func (iter *Enumerable) ToChannel() <-chan interface{} {
-	return iter.output
-}
-
 // ToSlice places all iterated over values in a Slice for easy consumption.
-func (iter *Enumerable) ToSlice() []interface{} {
+func (iter Enumerable) ToSlice() []interface{} {
 	retval := make([]interface{}, 0)
-	for entry := range iter.output {
+	for entry := range iter {
 		retval = append(retval, entry)
 	}
 	return retval
@@ -113,18 +91,15 @@ func (iter *Enumerable) ToSlice() []interface{} {
 
 // Where iterates over a list and returns only the elements that satisfy a
 // predicate.
-func (iter *Enumerable) Where(predicate Predicate) *Enumerable {
-	retval := &Enumerable{
-		output: make(chan interface{}),
-	}
-
+func (iter Enumerable) Where(predicate Predicate) Enumerable {
+	retval := make(chan interface{})
 	go func() {
-		for item := range iter.output {
+		for item := range iter {
 			if predicate(item) {
-				retval.output <- item
+				retval <- item
 			}
 		}
-		close(retval.output)
+		close(retval)
 	}()
 
 	return retval
@@ -132,9 +107,9 @@ func (iter *Enumerable) Where(predicate Predicate) *Enumerable {
 
 // UCount iterates over a list and keeps a running tally of the number of elements
 // satisfy a predicate.
-func (iter *Enumerable) UCount(p Predicate) uint {
+func (iter Enumerable) UCount(p Predicate) uint {
 	tally := uint(0)
-	for entry := range iter.output {
+	for entry := range iter {
 		if p(entry) {
 			tally++
 		}
@@ -143,9 +118,9 @@ func (iter *Enumerable) UCount(p Predicate) uint {
 }
 
 // UCountAll iterates over a list and keeps a running tally of how many it's seen.
-func (iter *Enumerable) UCountAll() uint {
+func (iter Enumerable) UCountAll() uint {
 	tally := uint(0)
-	for range iter.output {
+	for range iter {
 		tally++
 	}
 	return tally

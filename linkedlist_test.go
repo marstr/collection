@@ -27,7 +27,7 @@ func ExampleLinkedList_Enumerate() {
 	results := subject.Enumerate().Select(func(a interface{}) interface{} {
 		return -1 * a.(int)
 	})
-	for entry := range results.ToChannel() {
+	for entry := range results {
 		fmt.Println(entry)
 	}
 	// Output:
