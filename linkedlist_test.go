@@ -44,10 +44,13 @@ func ExampleLinkedList_Get() {
 	// Output: 5
 }
 
-func ExampleLinkedList_Get_OutsideBounds() {
+func TestLinkedList_Get_OutsideBounds(t *testing.T) {
 	subject := NewLinkedList(2, 3, 5, 8, 13, 21)
-	fmt.Print(subject.Get(10))
-	// Output: <nil> false
+	result, ok := subject.Get(10)
+	if !(result == nil && ok == false) {
+		t.Logf("got: %v %v\nwant: %v %v", result, ok, nil, false)
+		t.Fail()
+	}
 }
 
 func ExampleNewLinkedList() {
@@ -376,18 +379,17 @@ func UncheckedComparatori(a, b interface{}) (int, error) {
 }
 
 func ExampleLinkedList_String() {
-	subject := NewLinkedList(1, 2, 3)
-	fmt.Println(subject)
-	// Output: [1 2 3]
-}
-
-func ExampleLinkedList_String_Long() {
-	subject := NewLinkedList()
+	subject1 := NewLinkedList()
 	for i := 0; i < 20; i++ {
-		subject.AddBack(i)
+		subject1.AddBack(i)
 	}
-	fmt.Println(subject)
-	// Output: [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 ...]
+	fmt.Println(subject1)
+
+	subject2 := NewLinkedList(1, 2, 3)
+	fmt.Println(subject2)
+	// Output:
+	// [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 ...]
+	// [1 2 3]
 }
 
 func ExampleLinkedList_Swap() {

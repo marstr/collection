@@ -5,22 +5,31 @@ import (
 	"testing"
 )
 
-func ExampleNewStack_FromEmpty() {
+func TestStack_NewStack_FromEmpty(t *testing.T) {
 	subject := NewStack()
 	subject.Push("alfa")
 	subject.Push("bravo")
 	subject.Push("charlie")
-	for !subject.IsEmpty() {
-		val, _ := subject.Pop()
-		fmt.Println(val)
+
+	if result, ok := subject.Pop(); result != "charlie" || ok != true {
+		t.Logf("got: %s %v\nwant: %s %v", result, ok, "charlie", true)
+		t.Fail()
 	}
-	// Output:
-	// charlie
-	// bravo
-	// alfa
+	if result, ok := subject.Pop(); result != "bravo" || ok != true {
+		t.Logf("got: %s %v\nwant: %s %v", result, ok, "bravo", true)
+		t.Fail()
+	}
+	if result, ok := subject.Pop(); result != "alfa" || ok != true {
+		t.Logf("got: %s %v\nwant: %s %v", result, ok, "alfa", true)
+		t.Fail()
+	}
+	if !subject.IsEmpty() {
+		t.Log("subject should have been empty.")
+		t.Fail()
+	}
 }
 
-func ExampleNewStack_FromSlice() {
+func ExampleNewStack() {
 	subject := NewStack(1, 2, 3)
 	for !subject.IsEmpty() {
 		val, _ := subject.Pop()
