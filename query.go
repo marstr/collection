@@ -1,5 +1,9 @@
 package collection
 
+import (
+	"sync"
+)
+
 // Enumerable offers a means of easily converting into a channel. It is most
 // useful for types where mutability is not in question.
 type Enumerable interface {
@@ -53,6 +57,35 @@ func (iter Enumerator) CountAll() int {
 		tally++
 	}
 	return tally
+}
+
+// Merge takes the results as it receives them from several channels and directs
+// them into a single channel.
+func Merge(channels ...<-chan interface{}) Enumerator {
+	retval := make(chan interface{})
+
+	var wg sync.WaitGroup
+	wg.Add(len(channels))
+	for _, item := range channels {
+		go func(input <-chan interface{}) {
+			defer wg.Done()
+			for value := range input {
+				retval <- value
+			}
+		}(item)
+	}
+
+	go func() {
+		wg.Wait()
+		close(retval)
+	}()
+
+	return retval
+}
+
+// Merge combines the results from this Enumerator with that of several others.
+func (iter Enumerator) Merge(items ...<-chan interface{}) Enumerator {
+	return Merge(append(items, iter)...)
 }
 
 // Select iterates over a list and returns a transformed item.

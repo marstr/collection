@@ -1,7 +1,6 @@
 package collection
 
 import "fmt"
-
 import "sync"
 
 func ExampleEnumerator_Any() {
@@ -38,6 +37,30 @@ func ExampleEnumerator_CountAll() {
 	// Ouput: 5
 }
 
+func ExampleEnumerator_Merge() {
+	a := AsEnumerator(1, 2, 4)
+	b := AsEnumerator(8, 16, 32)
+	c := a.Merge(b)
+	sum := 0
+	for x := range c {
+		sum += x.(int)
+	}
+	fmt.Println(sum)
+	// Output: 63
+}
+
+func ExampleMerge() {
+	a := AsEnumerator(1, 2, 4)
+	b := AsEnumerator(8, 16, 32)
+	c := Merge(a, b)
+	sum := 0
+	for x := range c {
+		sum += x.(int)
+	}
+	fmt.Println(sum)
+	// Output: 63
+}
+
 func ExampleEnumerator_Select() {
 	subject := AsEnumerator('a', 'b', 'c')
 	const offset = 'a' - 1
@@ -52,26 +75,32 @@ func ExampleEnumerator_Select() {
 func ExampleEnumerator_Tee() {
 	base := AsEnumerator(1, 2, 4)
 	left, right := base.Tee()
-
 	var wg sync.WaitGroup
-
-	var sumKey sync.Mutex
-	sum := 0
-	findSum := func(e <-chan interface{}) {
-		defer wg.Done()
-		for entry := range e {
-			sumKey.Lock()
-			sum += entry.(int)
-			sumKey.Unlock()
-		}
-	}
 	wg.Add(2)
-	go findSum(left)
-	go findSum(right)
+
+	product := 1
+	go func() {
+		defer wg.Done()
+		for x := range left {
+			product *= x.(int)
+		}
+	}()
+
+	sum := 0
+	go func() {
+		defer wg.Done()
+		for x := range right {
+			sum += x.(int)
+		}
+	}()
+
 	wg.Wait()
 
-	fmt.Println(sum)
-	//Output: 14
+	fmt.Printf("Sum: %d\n", sum)
+	fmt.Printf("Product: %d\n", product)
+	// Output:
+	// Sum: 7
+	// Product: 8
 }
 
 func ExampleEnumerator_UCount() {
