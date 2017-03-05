@@ -61,6 +61,12 @@ func ExampleMerge() {
 	// Output: 63
 }
 
+func ExampleEnumerator_Reverse() {
+	a := AsEnumerator(1, 2, 3)
+	fmt.Println(a.Reverse().ToSlice())
+	// Output: [3 2 1]
+}
+
 func ExampleEnumerator_Select() {
 	subject := AsEnumerator('a', 'b', 'c')
 	const offset = 'a' - 1
@@ -78,6 +84,7 @@ func ExampleEnumerator_Single() {
 	if val, err := a.Single(); err == nil {
 		fmt.Println(val)
 	}
+
 	if val, err := b.Single(); err == nil {
 		fmt.Println(val)
 	}

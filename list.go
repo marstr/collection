@@ -80,7 +80,7 @@ func (l *List) Length() uint {
 	return uint(len(l.underlyer))
 }
 
-// Remove retreives a value from this List and offsets all other values.
+// Remove retreives a value from this List and shifts all other values.
 func (l *List) Remove(pos uint) (interface{}, bool) {
 	l.key.Lock()
 	defer l.key.Unlock()
@@ -101,9 +101,6 @@ func (l *List) Set(pos uint, val interface{}) bool {
 	count := uint(len(l.underlyer))
 	if pos > count {
 		retval = false
-	} else if pos == count {
-		l.underlyer = append(l.underlyer, val)
-		retval = true
 	} else {
 		l.underlyer[pos] = val
 		retval = true

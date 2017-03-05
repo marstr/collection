@@ -94,6 +94,25 @@ func (iter Enumerator) Merge(items ...<-chan interface{}) Enumerator {
 	return Merge(append(items, iter)...)
 }
 
+// Reverse returns items in the opposite order it encountered them in.
+func (iter Enumerator) Reverse() Enumerator {
+	cache := NewStack()
+	for entry := range iter {
+		cache.Push(entry)
+	}
+
+	retval := make(chan interface{})
+
+	go func() {
+		for !cache.IsEmpty() {
+			val, _ := cache.Pop()
+			retval <- val
+		}
+		close(retval)
+	}()
+	return retval
+}
+
 // Select iterates over a list and returns a transformed item.
 func (iter Enumerator) Select(transform func(interface{}) interface{}) Enumerator {
 	retval := make(chan interface{})
