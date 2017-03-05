@@ -1,6 +1,7 @@
 package collection
 
 import (
+	"errors"
 	"sync"
 )
 
@@ -15,6 +16,11 @@ type Enumerator <-chan interface{}
 
 // Predicate defines an interface for funcs that make some logical test.
 type Predicate func(interface{}) bool
+
+var (
+	errNoElements       = errors.New("Single.Enumerator encountered no elements")
+	errMultipleElements = errors.New("Single.Enumerator encountered multiple elements")
+)
 
 // Any tests an Enumerator to see if there are any elements present.
 func (iter Enumerator) Any() bool {
@@ -102,7 +108,27 @@ func (iter Enumerator) Select(transform func(interface{}) interface{}) Enumerato
 	return retval
 }
 
-// Tee splits athe results of a channel so that mulptiple actions can be taken on it.
+// Single retreives the only element from a list, or returns nil and an error.
+func (iter Enumerator) Single() (interface{}, error) {
+	var retval interface{}
+	retError := errNoElements
+
+	firstPass := true
+	for entry := range iter {
+		if firstPass {
+			retval = entry
+			retError = nil
+		} else {
+			retval = nil
+			retError = errMultipleElements
+			break
+		}
+		firstPass = false
+	}
+	return retval, retError
+}
+
+// Tee splits the results of a channel so that mulptiple actions can be taken on it.
 func (iter Enumerator) Tee() (Enumerator, Enumerator) {
 	left := make(chan interface{})
 	right := make(chan interface{})

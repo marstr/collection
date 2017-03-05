@@ -72,6 +72,18 @@ func ExampleEnumerator_Select() {
 	// Output: [1 2 3]
 }
 
+func ExampleEnumerator_Single() {
+	a := AsEnumerator(1, 2, 3)
+	b := AsEnumerator(4)
+	if val, err := a.Single(); err == nil {
+		fmt.Println(val)
+	}
+	if val, err := b.Single(); err == nil {
+		fmt.Println(val)
+	}
+	// Output: 4
+}
+
 func ExampleEnumerator_Tee() {
 	base := AsEnumerator(1, 2, 4)
 	left, right := base.Tee()
