@@ -27,17 +27,14 @@ func (l *List) Add(entries ...interface{}) {
 	l.underlyer = append(l.underlyer, entries...)
 }
 
-// AddAt injects values beginning at `position`. If multiple
-// values are provided in `entries` they are placed in the same
-// order they are provided.
-func (l *List) AddAt(position uint, entries ...interface{}) {
+// AddAt injects values beginning at `pos`. If multiple values
+// are provided in `entries` they are placed in the same order
+// they are provided.
+func (l *List) AddAt(pos uint, entries ...interface{}) {
 	l.key.Lock()
 	defer l.key.Unlock()
-	originalLength := len(l.underlyer)
-	l.underlyer = append(l.underlyer, entries...)
-	for i := 0; i < len(entries); i++ {
-		l.swap(position+uint(i), uint(originalLength+i))
-	}
+
+	l.underlyer = append(l.underlyer[:pos], append(entries, l.underlyer[pos:]...)...)
 }
 
 // Enumerate lists each element present in the collection
@@ -79,8 +76,39 @@ func (l *List) IsEmpty() bool {
 // Length returns the number of elements in the List.
 func (l *List) Length() uint {
 	l.key.RLock()
-	l.key.RUnlock()
+	defer l.key.RUnlock()
 	return uint(len(l.underlyer))
+}
+
+// Remove retreives a value from this List and offsets all other values.
+func (l *List) Remove(pos uint) (interface{}, bool) {
+	l.key.Lock()
+	defer l.key.Unlock()
+
+	if pos > uint(len(l.underlyer)) {
+		return nil, false
+	}
+	retval := l.underlyer[pos]
+	l.underlyer = append(l.underlyer[:pos], l.underlyer[pos+1:]...)
+	return retval, true
+}
+
+// Set updates the value stored at a given position in the List.
+func (l *List) Set(pos uint, val interface{}) bool {
+	l.key.Lock()
+	defer l.key.Unlock()
+	var retval bool
+	count := uint(len(l.underlyer))
+	if pos > count {
+		retval = false
+	} else if pos == count {
+		l.underlyer = append(l.underlyer, val)
+		retval = true
+	} else {
+		l.underlyer[pos] = val
+		retval = true
+	}
+	return retval
 }
 
 // String generates a textual representation of the List for the sake of debugging.
