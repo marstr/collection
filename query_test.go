@@ -91,6 +91,33 @@ func ExampleEnumerator_Single() {
 	// Output: 4
 }
 
+func ExampleEnumerator_Split() {
+	a := AsEnumerator(1, 2, 4, 8, 16)
+	left, right := a.Split()
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	leftSum := 0
+	go func() {
+		for x := range left {
+			leftSum += x.(int)
+		}
+		wg.Done()
+	}()
+
+	rightSum := 0
+	go func() {
+		for y := range right {
+			rightSum += y.(int)
+		}
+		wg.Done()
+	}()
+	wg.Wait()
+
+	fmt.Print(leftSum + rightSum)
+	// Output: 31
+}
+
 func ExampleEnumerator_Tee() {
 	base := AsEnumerator(1, 2, 4)
 	left, right := base.Tee()
@@ -99,18 +126,18 @@ func ExampleEnumerator_Tee() {
 
 	product := 1
 	go func() {
-		defer wg.Done()
 		for x := range left {
 			product *= x.(int)
 		}
+		wg.Done()
 	}()
 
 	sum := 0
 	go func() {
-		defer wg.Done()
 		for x := range right {
 			sum += x.(int)
 		}
+		wg.Done()
 	}()
 
 	wg.Wait()

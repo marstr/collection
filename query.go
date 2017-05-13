@@ -128,29 +128,45 @@ func (iter Enumerator) Select(transform func(interface{}) interface{}) Enumerato
 }
 
 // Single retreives the only element from a list, or returns nil and an error.
-func (iter Enumerator) Single() (interface{}, error) {
-	var retval interface{}
-	retError := errNoElements
+func (iter Enumerator) Single() (retval interface{}, err error) {
+	err = errNoElements
 
 	firstPass := true
 	for entry := range iter {
 		if firstPass {
 			retval = entry
-			retError = nil
+			err = nil
 		} else {
 			retval = nil
-			retError = errMultipleElements
+			err = errMultipleElements
 			break
 		}
 		firstPass = false
 	}
-	return retval, retError
+	return
 }
 
-// Tee splits the results of a channel so that mulptiple actions can be taken on it.
+// Split creates two Enumerators, each will be a subset of the original Enumerator and will have
+// distinct populations from one another.
+func (iter Enumerator) Split() (Enumerator, Enumerator) {
+	left, right := make(chan interface{}), make(chan interface{})
+
+	go func() {
+		for entry := range iter {
+			select {
+			case left <- entry:
+			case right <- entry:
+			}
+		}
+		close(left)
+		close(right)
+	}()
+	return left, right
+}
+
+// Tee creates two Enumerators which will have identical contents as one another.
 func (iter Enumerator) Tee() (Enumerator, Enumerator) {
-	left := make(chan interface{})
-	right := make(chan interface{})
+	left, right := make(chan interface{}), make(chan interface{})
 
 	go func() {
 		for entry := range iter {
