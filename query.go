@@ -22,10 +22,30 @@ var (
 	errMultipleElements = errors.New("Single.Enumerator encountered multiple elements")
 )
 
+// All tests whether or not all items present meet a criteria.
+func (iter Enumerator) All(p Predicate) bool {
+	for entry := range iter {
+		if !p(entry) {
+			return false
+		}
+	}
+	return true
+}
+
 // Any tests an Enumerator to see if there are any elements present.
 func (iter Enumerator) Any() bool {
 	for range iter {
 		return true
+	}
+	return false
+}
+
+// Anyp tests an Enumerator to see if there are any elements present that meet a criteria.
+func (iter Enumerator) Anyp(p Predicate) bool {
+	for entry := range iter {
+		if p(entry) {
+			return true
+		}
 	}
 	return false
 }
@@ -63,6 +83,22 @@ func (iter Enumerator) CountAll() int {
 		tally++
 	}
 	return tally
+}
+
+// ElementAt retreives an item at a particular position in an Enumerator.
+func (iter Enumerator) ElementAt(n uint) interface{} {
+	for i := uint(0); i < n; i++ {
+		<-iter
+	}
+	return <-iter
+}
+
+// Last retreives the item logically behind all other elements in the list.
+func (iter Enumerator) Last() (retval interface{}) {
+	for retval = range iter {
+		// Intentionally Left Blank
+	}
+	return
 }
 
 // Merge takes the results as it receives them from several channels and directs
@@ -146,6 +182,23 @@ func (iter Enumerator) Single() (retval interface{}, err error) {
 	return
 }
 
+// Skip retreives all elements after the first 'n' elements.
+func (iter Enumerator) Skip(n uint) Enumerator {
+	results := make(chan interface{})
+
+	go func() {
+		for i := uint(0); i < n; i++ {
+			<-iter
+		}
+		for entry := range iter {
+			results <- entry
+		}
+		close(results)
+	}()
+
+	return results
+}
+
 // Split creates two Enumerators, each will be a subset of the original Enumerator and will have
 // distinct populations from one another.
 func (iter Enumerator) Split() (Enumerator, Enumerator) {
@@ -162,6 +215,44 @@ func (iter Enumerator) Split() (Enumerator, Enumerator) {
 		close(right)
 	}()
 	return left, right
+}
+
+// Take retreives just the first 'n' elements from an Enumerator
+func (iter Enumerator) Take(n uint) Enumerator {
+	results := make(chan interface{})
+
+	go func() {
+		defer close(results)
+		i := uint(0)
+		for entry := range iter {
+			if i >= n {
+				return
+			}
+			i++
+			results <- entry
+		}
+	}()
+
+	return results
+}
+
+// TakeWhile continues returning items as long as 'criteria' holds true.
+func (iter Enumerator) TakeWhile(criteria func(interface{}, uint) bool) Enumerator {
+	results := make(chan interface{})
+
+	go func() {
+		defer close(results)
+		i := uint(0)
+		for entry := range iter {
+			if !criteria(entry, i) {
+				return
+			}
+			i++
+			results <- entry
+		}
+	}()
+
+	return results
 }
 
 // Tee creates two Enumerators which will have identical contents as one another.

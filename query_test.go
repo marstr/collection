@@ -37,6 +37,18 @@ func ExampleEnumerator_CountAll() {
 	// Ouput: 5
 }
 
+func ExampleEnumerator_ElementAt() {
+	subject := AsEnumerator(1, 2, 3, 5, 8)
+	fmt.Print(subject.ElementAt(2))
+	// Output: 3
+}
+
+func ExampleEnumerator_Last() {
+	subject := AsEnumerator(1, 2, 3)
+	fmt.Print(subject.Last())
+	//Output: 3
+}
+
 func ExampleEnumerator_Merge() {
 	a := AsEnumerator(1, 2, 4)
 	b := AsEnumerator(8, 16, 32)
@@ -91,6 +103,17 @@ func ExampleEnumerator_Single() {
 	// Output: 4
 }
 
+func ExampleEnumerator_Skip() {
+	subject := AsEnumerator(1, 2, 3, 4, 5, 6, 7)
+	subject = subject.Skip(5)
+	for entry := range subject {
+		fmt.Println(entry)
+	}
+	// Output:
+	// 6
+	// 7
+}
+
 func ExampleEnumerator_Split() {
 	a := AsEnumerator(1, 2, 4, 8, 16)
 	left, right := a.Split()
@@ -116,6 +139,34 @@ func ExampleEnumerator_Split() {
 
 	fmt.Print(leftSum + rightSum)
 	// Output: 31
+}
+
+func ExampleEnumerator_Take() {
+	subject := AsEnumerator(1, 2, 3, 4, 5, 6)
+	subject = subject.Skip(2).Take(3)
+	for entry := range subject {
+		fmt.Println(entry)
+	}
+	// Output:
+	// 3
+	// 4
+	// 5
+}
+
+func ExampleEnumerator_TakeWhile() {
+	subject := AsEnumerator(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+	subject = subject.TakeWhile(func(x interface{}, n uint) bool {
+		return x.(int) < 6
+	})
+	for entry := range subject {
+		fmt.Println(entry)
+	}
+	// Output:
+	// 1
+	// 2
+	// 3
+	// 4
+	// 5
 }
 
 func ExampleEnumerator_Tee() {
