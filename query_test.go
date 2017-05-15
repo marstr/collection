@@ -90,6 +90,70 @@ func ExampleEnumerator_Select() {
 	// Output: [1 2 3]
 }
 
+func ExampleEnumerator_SelectMany() {
+
+	type BrewHouse struct {
+		Name  string
+		Beers []string
+	}
+
+	breweries := AsEnumerator(
+		BrewHouse{
+			"Mac & Jacks",
+			[]string{
+				"African Amber",
+				"Ibis IPA",
+			},
+		},
+		BrewHouse{
+			"Post Doc",
+			[]string{
+				"Prereq Pale",
+			},
+		},
+		BrewHouse{
+			"Resonate",
+			[]string{
+				"Comfortably Numb IPA",
+				"Lithium Altbier",
+			},
+		},
+		BrewHouse{
+			"Triplehorn",
+			[]string{
+				"Samson",
+				"Pepper Belly",
+			},
+		},
+	)
+
+	beers := breweries.SelectMany(func(brewer interface{}) Enumerator {
+		results := make(chan interface{})
+
+		go func() {
+			for _, beer := range brewer.(BrewHouse).Beers {
+				results <- beer
+			}
+			close(results)
+		}()
+
+		return results
+	})
+
+	for beer := range beers {
+		fmt.Println(beer)
+	}
+
+	// Output:
+	// African Amber
+	// Ibis IPA
+	// Prereq Pale
+	// Comfortably Numb IPA
+	// Lithium Altbier
+	// Samson
+	// Pepper Belly
+}
+
 func ExampleEnumerator_Single() {
 	a := AsEnumerator(1, 2, 3)
 	b := AsEnumerator(4)

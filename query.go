@@ -17,10 +17,18 @@ type Enumerator <-chan interface{}
 // Predicate defines an interface for funcs that make some logical test.
 type Predicate func(interface{}) bool
 
+// Transform defines a function which takes a value, and returns some value based on the original.
+type Transform func(interface{}) interface{}
+
 var (
 	errNoElements       = errors.New("Single.Enumerator encountered no elements")
 	errMultipleElements = errors.New("Single.Enumerator encountered multiple elements")
 )
+
+//Identity is a trivial Transform which applies no operation on the value.
+func Identity(value interface{}) interface{} {
+	return value
+}
 
 // All tests whether or not all items present meet a criteria.
 func (iter Enumerator) All(p Predicate) bool {
@@ -150,12 +158,28 @@ func (iter Enumerator) Reverse() Enumerator {
 }
 
 // Select iterates over a list and returns a transformed item.
-func (iter Enumerator) Select(transform func(interface{}) interface{}) Enumerator {
+func (iter Enumerator) Select(transform Transform) Enumerator {
 	retval := make(chan interface{})
 
 	go func() {
 		for item := range iter {
 			retval <- transform(item)
+		}
+		close(retval)
+	}()
+
+	return retval
+}
+
+// SelectMany allows for flattening of data structures.
+func (iter Enumerator) SelectMany(lister func(interface{}) Enumerator) Enumerator {
+	retval := make(chan interface{})
+
+	go func() {
+		for parent := range iter {
+			for child := range lister(parent) {
+				retval <- child
+			}
 		}
 		close(retval)
 	}()
