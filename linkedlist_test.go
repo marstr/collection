@@ -71,139 +71,132 @@ func TestLinkedList_findLast_empty(t *testing.T) {
 	}
 }
 
-func TestLinkedList_merge_EmptyLeft(t *testing.T) {
-	left := NewLinkedList()
-
-	expected := []interface{}{1, 2, 3}
-	right := NewLinkedList(expected...)
-
-	merged, err := merge(left.first, right.first, UncheckedComparatori)
-	if err != nil {
-		t.Error(err)
+func TestLinkedList_merge(t *testing.T) {
+	testCases := []struct {
+		Left     *LinkedList
+		Right    *LinkedList
+		Expected []int
+		Comp     Comparator
+	}{
+		{
+			NewLinkedList(1, 3, 5),
+			NewLinkedList(2, 4),
+			[]int{1, 2, 3, 4, 5},
+			UncheckedComparatori,
+		},
+		{
+			NewLinkedList(1, 2, 3),
+			NewLinkedList(),
+			[]int{1, 2, 3},
+			UncheckedComparatori,
+		},
+		{
+			NewLinkedList(),
+			NewLinkedList(1, 2, 3),
+			[]int{1, 2, 3},
+			UncheckedComparatori,
+		},
+		{
+			NewLinkedList(),
+			NewLinkedList(),
+			[]int{},
+			UncheckedComparatori,
+		},
+		{
+			NewLinkedList(1),
+			NewLinkedList(1),
+			[]int{1, 1},
+			UncheckedComparatori,
+		},
+		{
+			NewLinkedList(2),
+			NewLinkedList(1),
+			[]int{1, 2},
+			UncheckedComparatori,
+		},
+		{
+			NewLinkedList(3),
+			NewLinkedList(),
+			[]int{3},
+			UncheckedComparatori,
+		},
+		{
+			NewLinkedList(),
+			NewLinkedList(10),
+			[]int{10},
+			UncheckedComparatori,
+		},
 	}
 
-	if len(expected) != 3 {
-		// If it was manually changed, go ahead and modify the line above.
-		// If it was programatically changed, something is wrong and you should investigate.
-		t.Logf("expected has been modified")
-		t.FailNow()
-	}
+	for _, tc := range testCases {
+		t.Run("", func(t *testing.T) {
+			result, err := merge(tc.Left.first, tc.Right.first, tc.Comp)
+			if err != nil {
+				t.Error(err)
+			}
 
-	current := merged
-	for i := 0; i < len(expected); i++ {
-		if expected[i] != current.payload {
-			t.Logf("got: %d\nwant: %d", current.payload, expected[i])
-			t.Fail()
-		}
-		current = current.next
-	}
-}
+			i := 0
+			for cursor := result; cursor != nil; cursor, i = cursor.next, i+1 {
+				if cursor.payload != tc.Expected[i] {
+					t.Logf("got: %d want: %d", cursor.payload.(int), tc.Expected[i])
+					t.Fail()
+				}
+			}
 
-func TestLinkedList_merge_EmptyRight(t *testing.T) {
-	right := NewLinkedList()
-
-	expected := []interface{}{1, 2, 3}
-	left := NewLinkedList(expected...)
-
-	merged, err := merge(left.first, right.first, UncheckedComparatori)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if len(expected) != 3 {
-		// If it was manually changed, go ahead and modify the line above.
-		// If it was programatically changed, something is wrong and you should investigate.
-		t.Logf("expected has been modified")
-		t.FailNow()
-	}
-
-	current := merged
-	for i := 0; i < len(expected); i++ {
-		if expected[i] != current.payload {
-			t.Logf("got: %d\nwant: %d", current.payload, expected[i])
-			t.Fail()
-		}
-		current = current.next
-	}
-}
-
-func Test_LinkedList_merge_BothPopulated(t *testing.T) {
-	expected := []interface{}{1, 2, 3, 4, 5}
-
-	odds := NewLinkedList(1, 3, 5)
-	evens := NewLinkedList(2, 4)
-
-	merged, err := merge(odds.first, evens.first, UncheckedComparatori)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if len(expected) != 5 {
-		// If it was manually changed, go ahead and modify the line above.
-		// If it was programatically changed, something is wrong and you should investigate.
-		t.Logf("expected has been modified")
-		t.FailNow()
-	}
-
-	current := merged
-	for i := 0; i < len(expected); i++ {
-		if expected[i] != current.payload {
-			t.Logf("got: %d\nwant: %d", current.payload, expected[i])
-			t.Fail()
-		}
-		current = current.next
+			if expectedLength := len(tc.Expected); i != expectedLength {
+				t.Logf("Unexpected length:\n\tgot: %d\n\twant: %d", i, expectedLength)
+				t.Fail()
+			}
+		})
 	}
 }
 
-func TestLinkedList_merge_BothEmpty(t *testing.T) {
-	result, err := merge(nil, nil, UncheckedComparatori)
-	if result != nil {
-		t.Logf("got:\n%v\nwant:\n%v\n", result, nil)
-		t.Fail()
-	}
-	if err != nil {
-		t.Logf("got:\n%v\nwant:\n%v\n", result, nil)
-		t.Fail()
-	}
-}
-
-func TestLinkedList_mergeSort_LeftRepair(t *testing.T) {
-	subject := NewLinkedList(1, 2, "str1", 4, 5, 6)
-	if err := subject.Sorti(); err != ErrUnexpectedType {
-		t.Log("`Sorti()` should have errored out")
-		t.FailNow()
+func TestLinkedList_mergeSort_repair(t *testing.T) {
+	testCases := []*LinkedList{
+		NewLinkedList(1, 2, "str1", 4, 5, 6),
+		NewLinkedList(1, 2, 3, "str1", 5, 6),
+		NewLinkedList(1, 'a', 3, 4, 5, 6),
+		NewLinkedList(1, 2, 3, 4, 5, uint(8)),
+		NewLinkedList("alpha", 0),
+		NewLinkedList(0, "kappa"),
 	}
 
-	if count := subject.Length(); count != 6 {
-		t.Logf("got: %d\nwant: %d", count, 6)
-		t.Fail()
-	}
+	for _, tc := range testCases {
+		t.Run(tc.String(), func(t *testing.T) {
+			originalLength := tc.Length()
+			originalElements := tc.Enumerate().ToSlice()
+			originalContents := tc.String()
 
-	resultStr := subject.String()
-	expectedStr := "[1 2 str1 4 5 6]"
-	if resultStr != expectedStr {
-		t.Logf("got: %s\nwant: %s", resultStr, expectedStr)
-		t.Fail()
-	}
-}
+			if err := tc.Sorti(); err != ErrUnexpectedType {
+				t.Log("`Sorti() should have thrown ErrUnexpectedType")
+				t.Fail()
+			}
 
-func TestLinkedList_mergeSort_RightRepair(t *testing.T) {
-	subject := NewLinkedList(1, 2, 3, "str1", 5, 6)
-	if err := subject.Sorti(); err != ErrUnexpectedType {
-		t.Log("`Sorti()` should have errored out")
-		t.FailNow()
-	}
+			t.Logf("Contents:\n\tOriginal:   \t%s\n\tPost Merge: \t%s", originalContents, tc.String())
 
-	if count := subject.Length(); count != 6 {
-		t.Logf("got: %d\nwant: %d", count, 6)
-		t.Fail()
-	}
+			if newLength := tc.Length(); newLength != originalLength {
+				t.Logf("Length changed. got: %d want: %d", newLength, originalLength)
+				t.Fail()
+			}
 
-	resultStr := subject.String()
-	expectedStr := "[1 2 3 str1 5 6]"
-	if resultStr != expectedStr {
-		t.Logf("got: %s\nwant: %s", resultStr, expectedStr)
-		t.Fail()
+			remaining := tc.Enumerate().ToSlice()
+
+			for _, desired := range originalElements {
+				found := false
+				for i, got := range remaining {
+					if got == desired {
+						remaining = append(remaining[:i], remaining[i+1:]...)
+						found = true
+						break
+					}
+				}
+
+				if !found {
+					t.Logf("couldn't find element: %v", desired)
+					t.Fail()
+				}
+			}
+		})
 	}
 }
 
@@ -247,24 +240,50 @@ func ExampleLinkedList_Sorti() {
 	// Output: [2 2 3 3 6 7]
 }
 
-func TestLinkedList_Sorti_Empty(t *testing.T) {
-	subject := NewLinkedList()
-	if err := subject.Sorti(); err != nil {
-		t.Error(err)
+func TestLinkedList_Sorti(t *testing.T) {
+	testCases := []struct {
+		*LinkedList
+		Expected []int
+	}{
+		{
+			NewLinkedList(),
+			[]int{},
+		},
+		{
+			NewLinkedList(1, 2, 3, 4),
+			[]int{1, 2, 3, 4},
+		},
+		{
+			NewLinkedList(0, -1, 2, 8, 9),
+			[]int{-1, 0, 2, 8, 9},
+		},
 	}
-}
 
-func TestLinkedList_Sorti_NotInts(t *testing.T) {
-	subject1 := NewLinkedList("str1", 2)
-	if err := subject1.Sorti(); err != ErrUnexpectedType {
-		t.Logf("got: %v\nwant: %v", err, ErrUnexpectedType)
-		t.Fail()
-	}
+	for _, tc := range testCases {
+		t.Run(tc.String(), func(t *testing.T) {
+			if err := tc.Sorti(); err != nil {
+				t.Error(err)
+			}
 
-	subject2 := NewLinkedList(3, "str2")
-	if err := subject2.Sorti(); err != ErrUnexpectedType {
-		t.Logf("got: %v\nwant: %v", err, ErrUnexpectedType)
-		t.Fail()
+			sorted := tc.ToSlice()
+
+			if countSorted, countExpected := len(sorted), len(tc.Expected); countSorted != countExpected {
+				t.Logf("got: %d want: %d", countSorted, countExpected)
+				t.FailNow()
+			}
+
+			for i, entry := range sorted {
+				cast, ok := entry.(int)
+				if !ok {
+					t.Errorf("Element was not an int: %v", entry)
+				}
+
+				if cast != tc.Expected[i] {
+					t.Logf("got: %d want: %d at: %d", cast, tc.Expected[i], i)
+					t.Fail()
+				}
+			}
+		})
 	}
 }
 

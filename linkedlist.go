@@ -233,11 +233,10 @@ func (list *LinkedList) Sorta() error {
 
 // Sorti rearranges the position of integer entries in this list so that they
 // are ascending.
-func (list *LinkedList) Sorti() error {
+func (list *LinkedList) Sorti() (err error) {
 	list.key.Lock()
 	defer list.key.Unlock()
 
-	var err error
 	list.first, err = mergeSort(list.first, func(a, b interface{}) (int, error) {
 		castA, ok := a.(int)
 		if !ok {
@@ -251,10 +250,10 @@ func (list *LinkedList) Sorti() error {
 		return castA - castB, nil
 	})
 	if err != nil {
-		return err
+		return
 	}
 	list.last = findLast(list.first)
-	return err
+	return
 }
 
 // String prints upto the first fifteen elements of the list in string format.
@@ -303,18 +302,7 @@ func (list *LinkedList) Swap(x, y uint) error {
 
 // ToSlice converts the contents of the LinkedList into a slice.
 func (list *LinkedList) ToSlice() []interface{} {
-	list.key.RLock()
-	defer list.key.RUnlock()
-
-	entryCount := int(list.length)
-	retval := make([]interface{}, entryCount)
-
-	current := list.first
-	for i := 0; i < entryCount; i++ {
-		retval[i] = current.payload
-		current = current.next
-	}
-	return retval
+	return list.Enumerate().ToSlice()
 }
 
 func findLast(head *llNode) *llNode {
