@@ -21,6 +21,14 @@ func NewStack(entries ...interface{}) *Stack {
 	return retval
 }
 
+// Enumerate peeks at each element in the stack without mutating it.
+func (stack *Stack) Enumerate() <-chan interface{} {
+	stack.key.RLock()
+	defer stack.key.RUnlock()
+
+	return stack.underlyer.Enumerate()
+}
+
 // IsEmpty tests the Stack to determine if it is populate or not.
 func (stack *Stack) IsEmpty() bool {
 	stack.key.RLock()

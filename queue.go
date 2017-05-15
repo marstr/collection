@@ -28,6 +28,13 @@ func (q *Queue) Add(entry interface{}) {
 	q.underlyer.AddBack(entry)
 }
 
+// Enumerate peeks at each element of this queue without mutating it.
+func (q *Queue) Enumerate() Enumerator {
+	q.key.RLock()
+	defer q.key.RUnlock()
+	return q.underlyer.Enumerate()
+}
+
 // IsEmpty tests the Queue to determine if it is populate or not.
 func (q *Queue) IsEmpty() bool {
 	q.key.RLock()

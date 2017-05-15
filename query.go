@@ -8,7 +8,7 @@ import (
 // Enumerable offers a means of easily converting into a channel. It is most
 // useful for types where mutability is not in question.
 type Enumerable interface {
-	Enumerate() <-chan interface{}
+	Enumerate() Enumerator
 }
 
 // Enumerator exposes a new syntax for querying familiar data structures.
@@ -40,12 +40,22 @@ func (iter Enumerator) All(p Predicate) bool {
 	return true
 }
 
+// Any tests an Enumerable to see if there are any elements present.
+func Any(iterator Enumerable) bool {
+	return iterator.Enumerate().Any()
+}
+
 // Any tests an Enumerator to see if there are any elements present.
 func (iter Enumerator) Any() bool {
 	for range iter {
 		return true
 	}
 	return false
+}
+
+// Anyp tests an Enumerable to see if there are any elements present that meet a criteria.
+func Anyp(iterator Enumerable, p Predicate) bool {
+	return iterator.Enumerate().Anyp(p)
 }
 
 // Anyp tests an Enumerator to see if there are any elements present that meet a criteria.
@@ -56,6 +66,26 @@ func (iter Enumerator) Anyp(p Predicate) bool {
 		}
 	}
 	return false
+}
+
+type enumerableSlice []interface{}
+
+func (f enumerableSlice) Enumerate() Enumerator {
+	results := make(chan interface{})
+
+	go func() {
+		for _, entry := range f {
+			results <- entry
+		}
+		close(results)
+	}()
+
+	return results
+}
+
+// AsEnumerable allows for easy conversion of a slice to a re-usable Enumerable object.
+func AsEnumerable(entries ...interface{}) Enumerable {
+	return enumerableSlice(entries)
 }
 
 // AsEnumerator allows for easy conversion to an Enumerator from a slice.
@@ -74,6 +104,12 @@ func AsEnumerator(entries ...interface{}) Enumerator {
 
 // Count iterates over a list and keeps a running tally of the number of elements
 // satisfy a predicate.
+func Count(iter Enumerable, p Predicate) int {
+	return iter.Enumerate().Count(p)
+}
+
+// Count iterates over a list and keeps a running tally of the number of elements
+// satisfy a predicate.
 func (iter Enumerator) Count(p Predicate) int {
 	tally := 0
 	for entry := range iter {
@@ -82,6 +118,11 @@ func (iter Enumerator) Count(p Predicate) int {
 		}
 	}
 	return tally
+}
+
+// CountAll iterates over a list and keeps a running tally of how many it's seen.
+func CountAll(iter Enumerable) int {
+	return iter.Enumerate().CountAll()
 }
 
 // CountAll iterates over a list and keeps a running tally of how many it's seen.
@@ -94,11 +135,21 @@ func (iter Enumerator) CountAll() int {
 }
 
 // ElementAt retreives an item at a particular position in an Enumerator.
+func ElementAt(iter Enumerable, n uint) interface{} {
+	return iter.Enumerate().ElementAt(n)
+}
+
+// ElementAt retreives an item at a particular position in an Enumerator.
 func (iter Enumerator) ElementAt(n uint) interface{} {
 	for i := uint(0); i < n; i++ {
 		<-iter
 	}
 	return <-iter
+}
+
+// Last retreives the item logically behind all other elements in the list.
+func Last(iter Enumerable) interface{} {
+	return iter.Enumerate().Last()
 }
 
 // Last retreives the item logically behind all other elements in the list.
@@ -185,6 +236,11 @@ func (iter Enumerator) SelectMany(lister func(interface{}) Enumerator) Enumerato
 	}()
 
 	return retval
+}
+
+// Single retreives the only element from a list, or returns nil and an error.
+func Single(iter Enumerable) (interface{}, error) {
+	return iter.Enumerate().Single()
 }
 
 // Single retreives the only element from a list, or returns nil and an error.
@@ -296,6 +352,11 @@ func (iter Enumerator) Tee() (Enumerator, Enumerator) {
 }
 
 // ToSlice places all iterated over values in a Slice for easy consumption.
+func ToSlice(iter Enumerable) []interface{} {
+	return iter.Enumerate().ToSlice()
+}
+
+// ToSlice places all iterated over values in a Slice for easy consumption.
 func (iter Enumerator) ToSlice() []interface{} {
 	retval := make([]interface{}, 0)
 	for entry := range iter {
@@ -322,6 +383,12 @@ func (iter Enumerator) Where(predicate Predicate) Enumerator {
 
 // UCount iterates over a list and keeps a running tally of the number of elements
 // satisfy a predicate.
+func UCount(iter Enumerable, p Predicate) uint {
+	return iter.Enumerate().UCount(p)
+}
+
+// UCount iterates over a list and keeps a running tally of the number of elements
+// satisfy a predicate.
 func (iter Enumerator) UCount(p Predicate) uint {
 	tally := uint(0)
 	for entry := range iter {
@@ -330,6 +397,11 @@ func (iter Enumerator) UCount(p Predicate) uint {
 		}
 	}
 	return tally
+}
+
+// UCountAll iterates over a list and keeps a running tally of how many it's seen.
+func UCountAll(iter Enumerable) uint {
+	return iter.Enumerate().UCountAll()
 }
 
 // UCountAll iterates over a list and keeps a running tally of how many it's seen.
