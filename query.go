@@ -2,6 +2,7 @@ package collection
 
 import (
 	"errors"
+	"runtime"
 	"sync"
 )
 
@@ -102,6 +103,11 @@ func AsEnumerator(entries ...interface{}) Enumerator {
 	return retval
 }
 
+// Cache stores the results of an Enumerator so the results can be enumerated over repeatedly.
+func (iter Enumerator) Cache() Enumerable {
+	return enumerableSlice(iter.ToSlice())
+}
+
 // Count iterates over a list and keeps a running tally of the number of elements
 // satisfy a predicate.
 func Count(iter Enumerable, p Predicate) int {
@@ -162,13 +168,13 @@ func (iter Enumerator) Last() (retval interface{}) {
 
 // Merge takes the results as it receives them from several channels and directs
 // them into a single channel.
-func Merge(channels ...<-chan interface{}) Enumerator {
+func Merge(channels ...Enumerator) Enumerator {
 	retval := make(chan interface{})
 
 	var wg sync.WaitGroup
 	wg.Add(len(channels))
 	for _, item := range channels {
-		go func(input <-chan interface{}) {
+		go func(input Enumerator) {
 			defer wg.Done()
 			for value := range input {
 				retval <- value
@@ -185,8 +191,15 @@ func Merge(channels ...<-chan interface{}) Enumerator {
 }
 
 // Merge combines the results from this Enumerator with that of several others.
-func (iter Enumerator) Merge(items ...<-chan interface{}) Enumerator {
+func (iter Enumerator) Merge(items ...Enumerator) Enumerator {
 	return Merge(append(items, iter)...)
+}
+
+// ParallelSelect spreads an expensive Transform across several go-routines, results
+// are not likely to be returned in the same order.
+func (iter Enumerator) ParallelSelect(operation Transform) Enumerator {
+	n := uint(runtime.NumCPU())
+	return Merge(iter.SplitN(operation, n)...)
 }
 
 // Reverse returns items in the opposite order it encountered them in.
@@ -281,20 +294,49 @@ func (iter Enumerator) Skip(n uint) Enumerator {
 
 // Split creates two Enumerators, each will be a subset of the original Enumerator and will have
 // distinct populations from one another.
-func (iter Enumerator) Split() (Enumerator, Enumerator) {
+func (iter Enumerator) Split(operation Transform) (Enumerator, Enumerator) {
 	left, right := make(chan interface{}), make(chan interface{})
 
 	go func() {
 		for entry := range iter {
+			transformed := operation(entry)
 			select {
-			case left <- entry:
-			case right <- entry:
+			case left <- transformed:
+			case right <- transformed:
 			}
 		}
 		close(left)
 		close(right)
 	}()
 	return left, right
+}
+
+// SplitN creates N Enumerators, each will be a subset of the original Enumerator and will have
+// distinct populations from one another.
+func (iter Enumerator) SplitN(operation Transform, n uint) []Enumerator {
+	results, cast := make([]chan interface{}, n, n), make([]Enumerator, n, n)
+
+	for i := uint(0); i < n; i++ {
+		results[i] = make(chan interface{})
+		cast[i] = results[i]
+	}
+
+	go func() {
+		for i := uint(0); i < n; i++ {
+			go func(addr uint) {
+				defer close(results[addr])
+				for {
+					read, ok := <-iter
+					if !ok {
+						return
+					}
+					results[addr] <- operation(read)
+				}
+			}(i)
+		}
+	}()
+
+	return cast
 }
 
 // Take retreives just the first 'n' elements from an Enumerator

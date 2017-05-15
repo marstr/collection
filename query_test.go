@@ -2,6 +2,9 @@ package collection
 
 import "fmt"
 import "sync"
+import "testing"
+import "runtime"
+import "time"
 
 func ExampleEnumerator_Any() {
 	empty := AsEnumerator()
@@ -71,6 +74,22 @@ func ExampleMerge() {
 	}
 	fmt.Println(sum)
 	// Output: 63
+}
+
+func ExampleEnumerator_ParallelSelect() {
+	a := AsEnumerator(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+
+	multiplied := a.ParallelSelect(func(num interface{}) interface{} {
+		time.Sleep(50 * time.Millisecond)
+		return num.(int) * 5
+	})
+
+	sum := 0
+	for entry := range multiplied {
+		sum = sum + entry.(int)
+	}
+	fmt.Print(sum)
+	// Output: 525
 }
 
 func ExampleEnumerator_Reverse() {
@@ -180,7 +199,8 @@ func ExampleEnumerator_Skip() {
 
 func ExampleEnumerator_Split() {
 	a := AsEnumerator(1, 2, 4, 8, 16)
-	left, right := a.Split()
+	left, right := a.Split(Identity)
+
 	var wg sync.WaitGroup
 	wg.Add(2)
 
@@ -203,6 +223,26 @@ func ExampleEnumerator_Split() {
 
 	fmt.Print(leftSum + rightSum)
 	// Output: 31
+}
+
+func ExampleEnumerator_SplitN() {
+	rawNums := make([]interface{}, 1000, 1000)
+	for i := 0; i < len(rawNums); i++ {
+		rawNums[i] = i + 1
+	}
+	nums := AsEnumerator(rawNums...)
+
+	workers := nums.SplitN(func(num interface{}) interface{} {
+		return num.(int) * 3
+	}, 8)
+
+	sum := 0
+	results := Merge(workers...)
+	for num := range results {
+		sum += num.(int)
+	}
+	fmt.Println(sum)
+	// Output: 1501500
 }
 
 func ExampleEnumerator_Take() {
@@ -284,4 +324,41 @@ func ExampleEnumerator_Where() {
 	results := subject.Where(func(a interface{}) bool { return a.(int) > 8 }).ToSlice()
 	fmt.Println(results)
 	// Output: [13 21 34]
+}
+
+func BenchmarkEnumerator_SplitN(b *testing.B) {
+	nums := AsEnumerable(getInitializedSequentialArray()...)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		results := Merge(nums.Enumerate().SplitN(sleepIdentity, uint(runtime.NumCPU()))...)
+		for range results {
+			// Intentionally Left Blank
+		}
+	}
+}
+
+func BenchmarkEnumerator_Sum(b *testing.B) {
+	nums := AsEnumerable(getInitializedSequentialArray()...)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for range nums.Enumerate().Select(sleepIdentity) {
+			// Intentionally Left Blank
+		}
+	}
+}
+
+func sleepIdentity(num interface{}) interface{} {
+	time.Sleep(2 * time.Millisecond)
+	return Identity(num)
+}
+
+func getInitializedSequentialArray() []interface{} {
+
+	rawNums := make([]interface{}, 1000, 1000)
+	for i := range rawNums {
+		rawNums[i] = i + 1
+	}
+	return rawNums
 }
