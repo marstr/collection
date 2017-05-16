@@ -9,7 +9,7 @@ Inspired by .NET's Linq, querying data structures used in this library is a snap
 ### Slices
 Converting between slices and a queryable structure is as trivial as it should be.
 ``` Go
-subject := []string{"a", "b", "c"}
+subject := []interface{}{"a", "b", "c"}
 
 for entry := range collection.AsEnumerator(subject...) {
     fmt.Println(entry)
