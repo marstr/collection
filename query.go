@@ -27,7 +27,7 @@ var (
 )
 
 //Identity is a trivial Transform which applies no operation on the value.
-func Identity(value interface{}) interface{} {
+var Identity Transform = func(value interface{}) interface{} {
 	return value
 }
 
