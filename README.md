@@ -80,4 +80,4 @@ fmt.Println(notPopulated.IsEmpty())
 This library will conform to strict semantic versions as defined by [semver.org](http://semver.org/spec/v2.0.0.html)'s v2 specification.
 
 # Contributing
-I accept contributions! To ensure `glide` users and `go get` users retreive the same commit, please submit PRs to the 'dev' branch. Remember to add tests!
+I accept contributions! To ensure `glide` users and `go get` users retrieve the same commit, please submit PRs to the 'dev' branch. Remember to add tests!
