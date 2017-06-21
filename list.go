@@ -44,6 +44,7 @@ func (l *List) Enumerate() Enumerator {
 	go func() {
 		l.key.RLock()
 		defer l.key.RUnlock()
+		defer close(retval)
 
 		for _, entry := range l.underlyer {
 			retval <- entry
