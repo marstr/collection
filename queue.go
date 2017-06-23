@@ -29,10 +29,10 @@ func (q *Queue) Add(entry interface{}) {
 }
 
 // Enumerate peeks at each element of this queue without mutating it.
-func (q *Queue) Enumerate() Enumerator {
+func (q *Queue) Enumerate(cancel <-chan struct{}) Enumerator {
 	q.key.RLock()
 	defer q.key.RUnlock()
-	return q.underlyer.Enumerate()
+	return q.underlyer.Enumerate(cancel)
 }
 
 // IsEmpty tests the Queue to determine if it is populate or not.

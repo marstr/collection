@@ -24,7 +24,7 @@ func ExampleLinkedList_AddBack() {
 
 func ExampleLinkedList_Enumerate() {
 	subject := NewLinkedList(2, 3, 5, 8)
-	results := subject.Enumerate().Select(func(a interface{}) interface{} {
+	results := subject.Enumerate(nil).Select(func(a interface{}) interface{} {
 		return -1 * a.(int)
 	})
 	for entry := range results {
@@ -164,7 +164,7 @@ func TestLinkedList_mergeSort_repair(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.String(), func(t *testing.T) {
 			originalLength := tc.Length()
-			originalElements := tc.Enumerate().ToSlice()
+			originalElements := tc.Enumerate(nil).ToSlice()
 			originalContents := tc.String()
 
 			if err := tc.Sorti(); err != ErrUnexpectedType {
@@ -179,7 +179,7 @@ func TestLinkedList_mergeSort_repair(t *testing.T) {
 				t.Fail()
 			}
 
-			remaining := tc.Enumerate().ToSlice()
+			remaining := tc.Enumerate(nil).ToSlice()
 
 			for _, desired := range originalElements {
 				found := false

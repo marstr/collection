@@ -38,7 +38,7 @@ func (l *List) AddAt(pos uint, entries ...interface{}) {
 }
 
 // Enumerate lists each element present in the collection
-func (l *List) Enumerate() Enumerator {
+func (l *List) Enumerate(cancel <-chan struct{}) Enumerator {
 	retval := make(chan interface{})
 
 	go func() {
@@ -47,7 +47,12 @@ func (l *List) Enumerate() Enumerator {
 		defer close(retval)
 
 		for _, entry := range l.underlyer {
-			retval <- entry
+			select {
+			case retval <- entry:
+				break
+			case <-cancel:
+				return
+			}
 		}
 	}()
 
