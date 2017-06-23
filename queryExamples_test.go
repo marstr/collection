@@ -21,7 +21,9 @@ func ExampleEnumerator_CountAll() {
 }
 
 func ExampleEnumerator_ElementAt() {
-	fmt.Print(Fibonacci.Enumerate(nil).ElementAt(4))
+	done := make(chan struct{})
+	defer close(done)
+	fmt.Print(Fibonacci.Enumerate(done).ElementAt(4))
 	// Output: 3
 }
 
@@ -40,7 +42,15 @@ func ExampleMerge() {
 		sum += x.(int)
 	}
 	fmt.Println(sum)
-	// Output: 63
+
+	product := 1
+	for y := range a.Enumerate(nil) {
+		product *= y.(int)
+	}
+	fmt.Println(product)
+	// Output:
+	// 63
+	// 8
 }
 
 func ExampleEnumerator_Reverse() {
@@ -103,21 +113,17 @@ func ExampleEnumerator_Take() {
 	done := make(chan struct{})
 	defer close(done)
 
-	subject := AsEnumerable(1, 2, 3, 4, 5, 6)
-	taken := subject.Enumerate(done).Skip(2).Take(2)
+	taken := Fibonacci.Enumerate(done).Skip(4).Take(2)
 	for entry := range taken {
 		fmt.Println(entry)
 	}
 	// Output:
 	// 3
-	// 4
+	// 5
 }
 
 func ExampleEnumerator_TakeWhile() {
-	done := make(chan struct{})
-	defer close(done)
-
-	taken := Fibonacci.Enumerate(done).TakeWhile(func(x interface{}, n uint) bool {
+	taken := Fibonacci.Enumerate(nil).TakeWhile(func(x interface{}, n uint) bool {
 		return x.(int) < 6
 	})
 	for entry := range taken {
@@ -179,10 +185,11 @@ func ExampleEnumerator_UCountAll() {
 }
 
 func ExampleEnumerator_Where() {
-	fibonnaci := AsEnumerable(1, 2, 3, 5, 8, 13, 21, 34)
-	results := fibonnaci.Enumerate(nil).Where(func(a interface{}) bool {
+	done := make(chan struct{})
+	defer close(done)
+	results := Fibonacci.Enumerate(done).Where(func(a interface{}) bool {
 		return a.(int) > 8
-	})
+	}).Take(3)
 	fmt.Println(results.ToSlice())
 	// Output: [13 21 34]
 }
