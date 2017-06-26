@@ -84,19 +84,24 @@ func (list *LinkedList) AddFront(entry interface{}) {
 }
 
 // Enumerate creates a new instance of Enumerable which can be executed on.
-func (list *LinkedList) Enumerate() Enumerator {
+func (list *LinkedList) Enumerate(cancel <-chan struct{}) Enumerator {
 	retval := make(chan interface{})
 
 	go func() {
 		list.key.RLock()
 		defer list.key.RUnlock()
+		defer close(retval)
 
 		current := list.first
 		for current != nil {
-			retval <- current.payload
+			select {
+			case retval <- current.payload:
+				break
+			case <-cancel:
+				return
+			}
 			current = current.next
 		}
-		close(retval)
 	}()
 
 	return retval
@@ -302,7 +307,7 @@ func (list *LinkedList) Swap(x, y uint) error {
 
 // ToSlice converts the contents of the LinkedList into a slice.
 func (list *LinkedList) ToSlice() []interface{} {
-	return list.Enumerate().ToSlice()
+	return list.Enumerate(nil).ToSlice()
 }
 
 func findLast(head *llNode) *llNode {

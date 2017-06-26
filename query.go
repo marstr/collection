@@ -2,14 +2,13 @@ package collection
 
 import (
 	"errors"
-	"runtime"
 	"sync"
 )
 
 // Enumerable offers a means of easily converting into a channel. It is most
 // useful for types where mutability is not in question.
 type Enumerable interface {
-	Enumerate() Enumerator
+	Enumerate(cancel <-chan struct{}) Enumerator
 }
 
 // Enumerator exposes a new syntax for querying familiar data structures.
@@ -43,12 +42,10 @@ func (iter Enumerator) All(p Predicate) bool {
 
 // Any tests an Enumerable to see if there are any elements present.
 func Any(iterator Enumerable) bool {
-	return iterator.Enumerate().Any()
-}
+	done := make(chan struct{})
+	defer close(done)
 
-// Any tests an Enumerator to see if there are any elements present.
-func (iter Enumerator) Any() bool {
-	for range iter {
+	for range iterator.Enumerate(done) {
 		return true
 	}
 	return false
@@ -56,13 +53,11 @@ func (iter Enumerator) Any() bool {
 
 // Anyp tests an Enumerable to see if there are any elements present that meet a criteria.
 func Anyp(iterator Enumerable, p Predicate) bool {
-	return iterator.Enumerate().Anyp(p)
-}
+	done := make(chan struct{})
+	defer close(done)
 
-// Anyp tests an Enumerator to see if there are any elements present that meet a criteria.
-func (iter Enumerator) Anyp(p Predicate) bool {
-	for entry := range iter {
-		if p(entry) {
+	for element := range iterator.Enumerate(done) {
+		if p(element) {
 			return true
 		}
 	}
@@ -71,14 +66,19 @@ func (iter Enumerator) Anyp(p Predicate) bool {
 
 type enumerableSlice []interface{}
 
-func (f enumerableSlice) Enumerate() Enumerator {
+func (f enumerableSlice) Enumerate(cancel <-chan struct{}) Enumerator {
 	results := make(chan interface{})
 
 	go func() {
+		defer close(results)
 		for _, entry := range f {
-			results <- entry
+			select {
+			case results <- entry:
+				break
+			case <-cancel:
+				return
+			}
 		}
-		close(results)
 	}()
 
 	return results
@@ -89,29 +89,15 @@ func AsEnumerable(entries ...interface{}) Enumerable {
 	return enumerableSlice(entries)
 }
 
-// AsEnumerator allows for easy conversion to an Enumerator from a slice.
-func AsEnumerator(entries ...interface{}) Enumerator {
-	retval := make(chan interface{})
-
-	go func() {
-		for _, entry := range entries {
-			retval <- entry
-		}
-		close(retval)
-	}()
-
-	return retval
-}
-
-// Cache stores the results of an Enumerator so the results can be enumerated over repeatedly.
-func (iter Enumerator) Cache() Enumerable {
+// AsEnumerable stores the results of an Enumerator so the results can be enumerated over repeatedly.
+func (iter Enumerator) AsEnumerable() Enumerable {
 	return enumerableSlice(iter.ToSlice())
 }
 
 // Count iterates over a list and keeps a running tally of the number of elements
 // satisfy a predicate.
 func Count(iter Enumerable, p Predicate) int {
-	return iter.Enumerate().Count(p)
+	return iter.Enumerate(nil).Count(p)
 }
 
 // Count iterates over a list and keeps a running tally of the number of elements
@@ -128,7 +114,7 @@ func (iter Enumerator) Count(p Predicate) int {
 
 // CountAll iterates over a list and keeps a running tally of how many it's seen.
 func CountAll(iter Enumerable) int {
-	return iter.Enumerate().CountAll()
+	return iter.Enumerate(nil).CountAll()
 }
 
 // CountAll iterates over a list and keeps a running tally of how many it's seen.
@@ -140,9 +126,19 @@ func (iter Enumerator) CountAll() int {
 	return tally
 }
 
+// Discard reads an enumerator to the end but does nothing with it.
+// This method should be used in circumstances when it doesn't make sense to explicitly cancel the Enumeration.
+func (iter Enumerator) Discard() {
+	for range iter {
+		// Intentionally Left Blank
+	}
+}
+
 // ElementAt retreives an item at a particular position in an Enumerator.
 func ElementAt(iter Enumerable, n uint) interface{} {
-	return iter.Enumerate().ElementAt(n)
+	done := make(chan struct{})
+	defer close(done)
+	return iter.Enumerate(done).ElementAt(n)
 }
 
 // ElementAt retreives an item at a particular position in an Enumerator.
@@ -155,7 +151,7 @@ func (iter Enumerator) ElementAt(n uint) interface{} {
 
 // Last retreives the item logically behind all other elements in the list.
 func Last(iter Enumerable) interface{} {
-	return iter.Enumerate().Last()
+	return iter.Enumerate(nil).Last()
 }
 
 // Last retreives the item logically behind all other elements in the list.
@@ -166,17 +162,19 @@ func (iter Enumerator) Last() (retval interface{}) {
 	return
 }
 
-// Merge takes the results as it receives them from several channels and directs
-// them into a single channel.
-func Merge(channels ...Enumerator) Enumerator {
+type merger struct {
+	originals []Enumerable
+}
+
+func (m merger) Enumerate(cancel <-chan struct{}) Enumerator {
 	retval := make(chan interface{})
 
 	var wg sync.WaitGroup
-	wg.Add(len(channels))
-	for _, item := range channels {
-		go func(input Enumerator) {
+	wg.Add(len(m.originals))
+	for _, item := range m.originals {
+		go func(input Enumerable) {
 			defer wg.Done()
-			for value := range input {
+			for value := range input.Enumerate(cancel) {
 				retval <- value
 			}
 		}(item)
@@ -186,20 +184,15 @@ func Merge(channels ...Enumerator) Enumerator {
 		wg.Wait()
 		close(retval)
 	}()
-
 	return retval
 }
 
-// Merge combines the results from this Enumerator with that of several others.
-func (iter Enumerator) Merge(items ...Enumerator) Enumerator {
-	return Merge(append(items, iter)...)
-}
-
-// ParallelSelect spreads an expensive Transform across several go-routines, results
-// are not likely to be returned in the same order.
-func (iter Enumerator) ParallelSelect(operation Transform) Enumerator {
-	n := uint(runtime.NumCPU())
-	return Merge(iter.SplitN(operation, n)...)
+// Merge takes the results as it receives them from several channels and directs
+// them into a single channel.
+func Merge(channels ...Enumerable) Enumerable {
+	return merger{
+		originals: channels,
+	}
 }
 
 // Reverse returns items in the opposite order it encountered them in.
@@ -235,6 +228,33 @@ func (iter Enumerator) Select(transform Transform) Enumerator {
 	return retval
 }
 
+type selectManyer struct {
+	original Enumerable
+	toMany   func(interface{}) Enumerable
+}
+
+func (s selectManyer) Enumerate(cancel <-chan struct{}) Enumerator {
+	retval := make(chan interface{})
+
+	go func() {
+		defer close(retval)
+		for i := range s.original.Enumerate(cancel) {
+			for j := range s.toMany(i).Enumerate(cancel) {
+				retval <- j
+			}
+		}
+	}()
+
+	return retval
+}
+
+func SelectMany(subject Enumerable, toMany func(interface{}) Enumerable) Enumerable {
+	return selectManyer{
+		original: subject,
+		toMany:   toMany,
+	}
+}
+
 // SelectMany allows for flattening of data structures.
 func (iter Enumerator) SelectMany(lister func(interface{}) Enumerator) Enumerator {
 	retval := make(chan interface{})
@@ -252,16 +272,14 @@ func (iter Enumerator) SelectMany(lister func(interface{}) Enumerator) Enumerato
 }
 
 // Single retreives the only element from a list, or returns nil and an error.
-func Single(iter Enumerable) (interface{}, error) {
-	return iter.Enumerate().Single()
-}
+func Single(iter Enumerable) (retval interface{}, err error) {
+	done := make(chan struct{})
+	defer close(done)
 
-// Single retreives the only element from a list, or returns nil and an error.
-func (iter Enumerator) Single() (retval interface{}, err error) {
 	err = errNoElements
 
 	firstPass := true
-	for entry := range iter {
+	for entry := range iter.Enumerate(done) {
 		if firstPass {
 			retval = entry
 			err = nil
@@ -395,7 +413,7 @@ func (iter Enumerator) Tee() (Enumerator, Enumerator) {
 
 // ToSlice places all iterated over values in a Slice for easy consumption.
 func ToSlice(iter Enumerable) []interface{} {
-	return iter.Enumerate().ToSlice()
+	return iter.Enumerate(nil).ToSlice()
 }
 
 // ToSlice places all iterated over values in a Slice for easy consumption.
@@ -405,6 +423,34 @@ func (iter Enumerator) ToSlice() []interface{} {
 		retval = append(retval, entry)
 	}
 	return retval
+}
+
+type whiler struct {
+	original Enumerable
+	filter   Predicate
+}
+
+func (w whiler) Enumerate(cancel <-chan struct{}) Enumerator {
+	retval := make(chan interface{})
+
+	go func() {
+		defer close(retval)
+		for entry := range w.original.Enumerate(cancel) {
+			if w.filter(entry) {
+				retval <- entry
+			}
+		}
+	}()
+
+	return retval
+}
+
+// Where creates a reusable means of filtering a stream.
+func Where(original Enumerable, p Predicate) Enumerable {
+	return whiler{
+		original: original,
+		filter:   p,
+	}
 }
 
 // Where iterates over a list and returns only the elements that satisfy a
@@ -426,7 +472,7 @@ func (iter Enumerator) Where(predicate Predicate) Enumerator {
 // UCount iterates over a list and keeps a running tally of the number of elements
 // satisfy a predicate.
 func UCount(iter Enumerable, p Predicate) uint {
-	return iter.Enumerate().UCount(p)
+	return iter.Enumerate(nil).UCount(p)
 }
 
 // UCount iterates over a list and keeps a running tally of the number of elements
@@ -443,7 +489,7 @@ func (iter Enumerator) UCount(p Predicate) uint {
 
 // UCountAll iterates over a list and keeps a running tally of how many it's seen.
 func UCountAll(iter Enumerable) uint {
-	return iter.Enumerate().UCountAll()
+	return iter.Enumerate(nil).UCountAll()
 }
 
 // UCountAll iterates over a list and keeps a running tally of how many it's seen.
