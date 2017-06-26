@@ -2,6 +2,7 @@ package collection
 
 import (
 	"errors"
+	"runtime"
 	"sync"
 )
 
@@ -24,8 +25,8 @@ type Transform func(interface{}) interface{}
 type Unfolder func(interface{}) Enumerator
 
 var (
-	errNoElements       = errors.New("Single.Enumerator encountered no elements")
-	errMultipleElements = errors.New("Single.Enumerator encountered multiple elements")
+	errNoElements       = errors.New("Enumerator encountered no elements")
+	errMultipleElements = errors.New("Enumerator encountered multiple elements")
 )
 
 //Identity is a trivial Transform which applies no operation on the value.
@@ -160,6 +161,23 @@ func (iter Enumerator) ElementAt(n uint) interface{} {
 	return <-iter
 }
 
+// First retrieves just the first item in the list, or returns an error if there are no elements in the array.
+func First(subject Enumerable) (retval interface{}, err error) {
+	done := make(chan struct{})
+
+	err = errNoElements
+
+	var isOpen bool
+
+	if retval, isOpen = <-subject.Enumerate(nil); isOpen {
+		err = nil
+	}
+
+	subject.Enumerate(done)
+
+	return
+}
+
 // Last retreives the item logically behind all other elements in the list.
 func Last(iter Enumerable) interface{} {
 	return iter.Enumerate(nil).Last()
@@ -204,6 +222,60 @@ func Merge(channels ...Enumerable) Enumerable {
 	return merger{
 		originals: channels,
 	}
+}
+
+// Merge takes the results of this Enumerator and others, and funnels them into
+// a single Enumerator. The order of in which they will be combined is non-deterministic.
+func (iter Enumerator) Merge(others ...Enumerator) Enumerator {
+	retval := make(chan interface{})
+
+	var wg sync.WaitGroup
+	wg.Add(len(others) + 1)
+
+	funnel := func(prevResult Enumerator) {
+		for entry := range prevResult {
+			retval <- entry
+		}
+		wg.Done()
+	}
+
+	go funnel(iter)
+	for _, item := range others {
+		go funnel(item)
+	}
+
+	go func() {
+		wg.Wait()
+		close(retval)
+	}()
+	return retval
+}
+
+type parallelSelecter struct {
+	original  Enumerable
+	operation Transform
+}
+
+func (ps parallelSelecter) Enumerate(cancel <-chan struct{}) Enumerator {
+	return ps.original.Enumerate(cancel).ParallelSelect(ps.operation)
+}
+
+// ParallelSelect creates an Enumerable which will use all logically available CPUs to
+// execute a Transform.
+func ParallelSelect(original Enumerable, operation Transform) Enumerable {
+	return parallelSelecter{
+		original:  original,
+		operation: operation,
+	}
+}
+
+// ParallelSelect will execute a Transform across all logical CPUs available to the current process.
+func (iter Enumerator) ParallelSelect(operation Transform) Enumerator {
+	if cpus := runtime.NumCPU(); cpus != 1 {
+		intermediate := iter.splitN(operation, uint(cpus))
+		return intermediate[0].Merge(intermediate[1:]...)
+	}
+	return iter
 }
 
 // Reverse returns items in the opposite order it encountered them in.
@@ -311,6 +383,24 @@ func Single(iter Enumerable) (retval interface{}, err error) {
 	return
 }
 
+type skipper struct {
+	original  Enumerable
+	skipCount uint
+}
+
+func (s skipper) Enumerate(cancel <-chan struct{}) Enumerator {
+	return s.original.Enumerate(cancel).Skip(s.skipCount)
+}
+
+// Skip creates a reusable stream which will skip the first `n` elements before iterating
+// over the rest of the elements in an Enumerable.
+func Skip(subject Enumerable, n uint) Enumerable {
+	return skipper{
+		original:  subject,
+		skipCount: n,
+	}
+}
+
 // Skip retreives all elements after the first 'n' elements.
 func (iter Enumerator) Skip(n uint) Enumerator {
 	results := make(chan interface{})
@@ -331,28 +421,9 @@ func (iter Enumerator) Skip(n uint) Enumerator {
 	return results
 }
 
-// Split creates two Enumerators, each will be a subset of the original Enumerator and will have
+// splitN creates N Enumerators, each will be a subset of the original Enumerator and will have
 // distinct populations from one another.
-func (iter Enumerator) Split(operation Transform) (Enumerator, Enumerator) {
-	left, right := make(chan interface{}), make(chan interface{})
-
-	go func() {
-		for entry := range iter {
-			transformed := operation(entry)
-			select {
-			case left <- transformed:
-			case right <- transformed:
-			}
-		}
-		close(left)
-		close(right)
-	}()
-	return left, right
-}
-
-// SplitN creates N Enumerators, each will be a subset of the original Enumerator and will have
-// distinct populations from one another.
-func (iter Enumerator) SplitN(operation Transform, n uint) []Enumerator {
+func (iter Enumerator) splitN(operation Transform, n uint) []Enumerator {
 	results, cast := make([]chan interface{}, n, n), make([]Enumerator, n, n)
 
 	for i := uint(0); i < n; i++ {
@@ -378,7 +449,24 @@ func (iter Enumerator) SplitN(operation Transform, n uint) []Enumerator {
 	return cast
 }
 
-// Take retreives just the first 'n' elements from an Enumerator
+type taker struct {
+	original Enumerable
+	n        uint
+}
+
+func (t taker) Enumerate(cancel <-chan struct{}) Enumerator {
+	return t.original.Enumerate(cancel).Take(t.n)
+}
+
+// Take retreives just the first `n` elements from an Enumerable.
+func Take(subject Enumerable, n uint) Enumerable {
+	return taker{
+		original: subject,
+		n:        n,
+	}
+}
+
+// Take retreives just the first 'n' elements from an Enumerator.
 func (iter Enumerator) Take(n uint) Enumerator {
 	results := make(chan interface{})
 
@@ -463,12 +551,12 @@ func (iter Enumerator) ToSlice() []interface{} {
 	return retval
 }
 
-type whiler struct {
+type wherer struct {
 	original Enumerable
 	filter   Predicate
 }
 
-func (w whiler) Enumerate(cancel <-chan struct{}) Enumerator {
+func (w wherer) Enumerate(cancel <-chan struct{}) Enumerator {
 	retval := make(chan interface{})
 
 	go func() {
@@ -485,7 +573,7 @@ func (w whiler) Enumerate(cancel <-chan struct{}) Enumerator {
 
 // Where creates a reusable means of filtering a stream.
 func Where(original Enumerable, p Predicate) Enumerable {
-	return whiler{
+	return wherer{
 		original: original,
 		filter:   p,
 	}
