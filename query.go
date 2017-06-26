@@ -20,6 +20,9 @@ type Predicate func(interface{}) bool
 // Transform defines a function which takes a value, and returns some value based on the original.
 type Transform func(interface{}) interface{}
 
+// Unfolder defines a function which takes a single value, and exposes many of them as an Enumerator
+type Unfolder func(interface{}) Enumerator
+
 var (
 	errNoElements       = errors.New("Single.Enumerator encountered no elements")
 	errMultipleElements = errors.New("Single.Enumerator encountered multiple elements")
@@ -28,6 +31,14 @@ var (
 //Identity is a trivial Transform which applies no operation on the value.
 var Identity Transform = func(value interface{}) interface{} {
 	return value
+}
+
+// All tests whether or not all items present in an Enumerable meet a criteria.
+func All(subject Enumerable, p Predicate) bool {
+	done := make(chan struct{})
+	defer close(done)
+
+	return subject.Enumerate(done).All(p)
 }
 
 // All tests whether or not all items present meet a criteria.
@@ -230,25 +241,18 @@ func (iter Enumerator) Select(transform Transform) Enumerator {
 
 type selectManyer struct {
 	original Enumerable
-	toMany   func(interface{}) Enumerable
+	toMany   Unfolder
 }
 
 func (s selectManyer) Enumerate(cancel <-chan struct{}) Enumerator {
-	retval := make(chan interface{})
+	done := make(chan struct{})
+	defer close(done)
 
-	go func() {
-		defer close(retval)
-		for i := range s.original.Enumerate(cancel) {
-			for j := range s.toMany(i).Enumerate(cancel) {
-				retval <- j
-			}
-		}
-	}()
-
-	return retval
+	return s.original.Enumerate(done).SelectMany(s.toMany)
 }
 
-func SelectMany(subject Enumerable, toMany func(interface{}) Enumerable) Enumerable {
+// SelectMany allows for unfolding of values.
+func SelectMany(subject Enumerable, toMany Unfolder) Enumerable {
 	return selectManyer{
 		original: subject,
 		toMany:   toMany,
@@ -256,7 +260,7 @@ func SelectMany(subject Enumerable, toMany func(interface{}) Enumerable) Enumera
 }
 
 // SelectMany allows for flattening of data structures.
-func (iter Enumerator) SelectMany(lister func(interface{}) Enumerator) Enumerator {
+func (iter Enumerator) SelectMany(lister Unfolder) Enumerator {
 	retval := make(chan interface{})
 
 	go func() {
@@ -374,6 +378,46 @@ func (iter Enumerator) Take(n uint) Enumerator {
 	}()
 
 	return results
+}
+
+type takeWhiler struct {
+	original Enumerable
+	criteria func(interface{}, uint) bool
+}
+
+func (tw takeWhiler) Enumerate(cancel <-chan struct{}) Enumerator {
+	retval := make(chan interface{})
+
+	go func() {
+		defer close(retval)
+
+		done := make(chan struct{})
+		defer close(done)
+
+		i := uint(0)
+		for entry := range tw.original.Enumerate(done) {
+			if tw.criteria(entry, i) {
+				select {
+				case retval <- entry:
+					break
+				case <-cancel:
+					return
+				}
+			} else {
+				return
+			}
+		}
+	}()
+
+	return retval
+}
+
+// TakeWhile creates a reusable stream which will halt once some criteria is no longer met.
+func TakeWhile(subject Enumerable, criteria func(interface{}, uint) bool) Enumerable {
+	return takeWhiler{
+		original: subject,
+		criteria: criteria,
+	}
 }
 
 // TakeWhile continues returning items as long as 'criteria' holds true.

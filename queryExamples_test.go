@@ -70,6 +70,61 @@ func ExampleEnumerator_Select() {
 	// Output: [1 2 3]
 }
 
+func ExampleEnumerator_SelectMany() {
+
+	type BrewHouse struct {
+		Name  string
+		Beers []interface{}
+	}
+
+	breweries := AsEnumerable(
+		BrewHouse{
+			"Mac & Jacks",
+			[]interface{}{
+				"African Amber",
+				"Ibis IPA",
+			},
+		},
+		BrewHouse{
+			"Post Doc",
+			[]interface{}{
+				"Prereq Pale",
+			},
+		},
+		BrewHouse{
+			"Resonate",
+			[]interface{}{
+				"Comfortably Numb IPA",
+				"Lithium Altbier",
+			},
+		},
+		BrewHouse{
+			"Triplehorn",
+			[]interface{}{
+				"Samson",
+				"Pepper Belly",
+			},
+		},
+	)
+
+	beers := breweries.Enumerate(nil).SelectMany(func(brewer interface{}) Enumerator {
+		return AsEnumerable(brewer.(BrewHouse).Beers...).Enumerate(nil)
+	})
+
+	for beer := range beers {
+		fmt.Println(beer)
+	}
+
+	// Output:
+	// African Amber
+	// Ibis IPA
+	// Prereq Pale
+	// Comfortably Numb IPA
+	// Lithium Altbier
+	// Samson
+	// Pepper Belly
+}
+
 func ExampleEnumerator_Skip() {
 	subject := AsEnumerable(1, 2, 3, 4, 5, 6, 7)
 	skipped := subject.Enumerate(nil).Skip(5)
@@ -120,6 +175,23 @@ func ExampleEnumerator_Take() {
 	// Output:
 	// 3
 	// 5
+}
+
+func ExampleTakeWhile() {
+	taken := TakeWhile(Fibonacci, func(x interface{}, n uint) bool {
+		return x.(int) < 10
+	})
+	for entry := range taken.Enumerate(nil) {
+		fmt.Println(entry)
+	}
+	// Output:
+	// 0
+	// 1
+	// 1
+	// 2
+	// 3
+	// 5
+	// 8
 }
 
 func ExampleEnumerator_TakeWhile() {
