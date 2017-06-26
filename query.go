@@ -225,6 +225,23 @@ func (iter Enumerator) Reverse() Enumerator {
 	return retval
 }
 
+type selecter struct {
+	original  Enumerable
+	transform Transform
+}
+
+func (s selecter) Enumerate(cancel <-chan struct{}) Enumerator {
+	return s.original.Enumerate(cancel).Select(s.transform)
+}
+
+// Select creates a reusable stream of transformed values.
+func Select(subject Enumerable, transform Transform) Enumerable {
+	return selecter{
+		original:  subject,
+		transform: transform,
+	}
+}
+
 // Select iterates over a list and returns a transformed item.
 func (iter Enumerator) Select(transform Transform) Enumerator {
 	retval := make(chan interface{})
@@ -245,10 +262,7 @@ type selectManyer struct {
 }
 
 func (s selectManyer) Enumerate(cancel <-chan struct{}) Enumerator {
-	done := make(chan struct{})
-	defer close(done)
-
-	return s.original.Enumerate(done).SelectMany(s.toMany)
+	return s.original.Enumerate(cancel).SelectMany(s.toMany)
 }
 
 // SelectMany allows for unfolding of values.
@@ -302,13 +316,16 @@ func (iter Enumerator) Skip(n uint) Enumerator {
 	results := make(chan interface{})
 
 	go func() {
-		for i := uint(0); i < n; i++ {
-			<-iter
-		}
+		defer close(results)
+
+		i := uint(0)
 		for entry := range iter {
+			if i < n {
+				i++
+				continue
+			}
 			results <- entry
 		}
-		close(results)
 	}()
 
 	return results
@@ -386,30 +403,7 @@ type takeWhiler struct {
 }
 
 func (tw takeWhiler) Enumerate(cancel <-chan struct{}) Enumerator {
-	retval := make(chan interface{})
-
-	go func() {
-		defer close(retval)
-
-		done := make(chan struct{})
-		defer close(done)
-
-		i := uint(0)
-		for entry := range tw.original.Enumerate(done) {
-			if tw.criteria(entry, i) {
-				select {
-				case retval <- entry:
-					break
-				case <-cancel:
-					return
-				}
-			} else {
-				return
-			}
-		}
-	}()
-
-	return retval
+	return tw.original.Enumerate(cancel).TakeWhile(tw.criteria)
 }
 
 // TakeWhile creates a reusable stream which will halt once some criteria is no longer met.

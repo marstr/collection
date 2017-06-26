@@ -9,9 +9,10 @@ Inspired by .NET's Linq, querying data structures used in this library is a snap
 ### Slices
 Converting between slices and a queryable structure is as trivial as it should be.
 ``` Go
-subject := []interface{}{"a", "b", "c"}
+original := []interface{}{"a", "b", "c"}
+subject := collection.AsEnumerable(original...)
 
-for entry := range collection.AsEnumerator(subject...) {
+for entry := range subject.Enumerate(nil) {
     fmt.Println(entry)
 }
 // Output:
@@ -23,11 +24,11 @@ for entry := range collection.AsEnumerator(subject...) {
 
 ### Where
 ``` Go
-subject := collection.AsEnumerator(1, 2, 3, 4, 5, 6)
-subject = subject.Where(func(num interface{}) bool{
+subject := collection.AsEnumerable(1, 2, 3, 4, 5, 6)
+filtered := collection.Where(subject, func(num interface{}) bool{
     return num.(int) > 3
 })
-for entry := range subject {
+for entry := range filtered.Enumerate(nil) {
     fmt.Println(entry)
 }
 // Output:
@@ -37,28 +38,33 @@ for entry := range subject {
 ```
 ### Select
 ``` Go
-subject := collection.AsEnumerator(1, 2, 3, 4, 5, 6)
-subject = subject.Select(func(num interface{}) interface{}{
+subject := collection.AsEnumerable(1, 2, 3, 4, 5, 6)
+updated := collection.Select(subject, func(num interface{}) interface{}{
     return num.(int) + 10
-}).Take(3)
-for entry := range subject {
+})
+for entry := range updated.Enumerate(nil) {
     fmt.Println(entry)
 }
 // Output:
 // 11
 // 12
 // 13
+// 14
+// 15
+// 16
 ```
 
 ## Queues
 ### Creating a Queue
 
 ``` Go
-subject := collection.NewQueue(1, 2, 3, 5, 8, 13)
-selected := subject.Enumerate().Skip(3).Take(3)
+done := make(chan struct{})
+subject := collection.NewQueue(1, 2, 3, 5, 8, 13, 21)
+selected := subject.Enumerate(done).Skip(3).Take(3)
 for entry := range selected {
-    fmt.Println(entry)
+	fmt.Println(entry)
 }
+close(done)
 // Output:
 // 5
 // 8
