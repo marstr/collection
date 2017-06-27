@@ -6,18 +6,29 @@ import (
 )
 
 func ExampleAsEnumerable() {
+	// When a single value is provided, and it is an array or slice, each value in the array or slice is treated as an enumerable value.
 	original := []int{1, 2, 3, 4, 5}
 	wrapped := AsEnumerable(original)
 
 	for entry := range wrapped.Enumerate(nil) {
+		fmt.Print(entry)
+	}
+	fmt.Println()
+
+	// When multiple values are provided, regardless of their type, they are each treated as enumerable values.
+	wrapped = AsEnumerable("red", "orange", "yellow", "green", "blue", "indigo", "violet")
+	for entry := range wrapped.Enumerate(nil) {
 		fmt.Println(entry)
 	}
 	// Output:
-	// 1
-	// 2
-	// 3
-	// 4
-	// 5
+	// 12345
+	// red
+	// orange
+	// yellow
+	// green
+	// blue
+	// indigo
+	// violet
 }
 
 func ExampleEnumerator_Count() {
