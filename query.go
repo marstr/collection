@@ -2,6 +2,7 @@ package collection
 
 import (
 	"errors"
+	"reflect"
 	"runtime"
 	"sync"
 )
@@ -96,8 +97,44 @@ func (f enumerableSlice) Enumerate(cancel <-chan struct{}) Enumerator {
 	return results
 }
 
+type enumerableValue struct {
+	reflect.Value
+}
+
+func (v enumerableValue) Enumerate(cancel <-chan struct{}) Enumerator {
+	results := make(chan interface{})
+
+	go func() {
+		defer close(results)
+
+		elements := v.Len()
+
+		for i := 0; i < elements; i++ {
+			select {
+			case results <- v.Index(i).Interface():
+				break
+			case <-cancel:
+				return
+			}
+		}
+	}()
+
+	return results
+}
+
 // AsEnumerable allows for easy conversion of a slice to a re-usable Enumerable object.
 func AsEnumerable(entries ...interface{}) Enumerable {
+	if len(entries) != 1 {
+		return enumerableSlice(entries)
+	}
+
+	val := reflect.ValueOf(entries[0])
+
+	if kind := val.Kind(); kind == reflect.Slice || kind == reflect.Array {
+		return enumerableValue{
+			Value: val,
+		}
+	}
 	return enumerableSlice(entries)
 }
 

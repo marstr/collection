@@ -5,6 +5,21 @@ import (
 	"sync"
 )
 
+func ExampleAsEnumerable() {
+	original := []int{1, 2, 3, 4, 5}
+	wrapped := AsEnumerable(original)
+
+	for entry := range wrapped.Enumerate(nil) {
+		fmt.Println(entry)
+	}
+	// Output:
+	// 1
+	// 2
+	// 3
+	// 4
+	// 5
+}
+
 func ExampleEnumerator_Count() {
 	subject := AsEnumerable("str1", "str1", "str2")
 	count1 := subject.Enumerate(nil).Count(func(a interface{}) bool {
@@ -104,41 +119,41 @@ func ExampleEnumerator_SelectMany() {
 
 	type BrewHouse struct {
 		Name  string
-		Beers []interface{}
+		Beers Enumerable
 	}
 
 	breweries := AsEnumerable(
 		BrewHouse{
 			"Mac & Jacks",
-			[]interface{}{
+			AsEnumerable(
 				"African Amber",
 				"Ibis IPA",
-			},
+			),
 		},
 		BrewHouse{
 			"Post Doc",
-			[]interface{}{
+			AsEnumerable(
 				"Prereq Pale",
-			},
+			),
 		},
 		BrewHouse{
 			"Resonate",
-			[]interface{}{
+			AsEnumerable(
 				"Comfortably Numb IPA",
 				"Lithium Altbier",
-			},
+			),
 		},
 		BrewHouse{
 			"Triplehorn",
-			[]interface{}{
+			AsEnumerable(
 				"Samson",
 				"Pepper Belly",
-			},
+			),
 		},
 	)
 
 	beers := breweries.Enumerate(nil).SelectMany(func(brewer interface{}) Enumerator {
-		return AsEnumerable(brewer.(BrewHouse).Beers...).Enumerate(nil)
+		return brewer.(BrewHouse).Beers.Enumerate(nil)
 	})
 
 	for beer := range beers {
