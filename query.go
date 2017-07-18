@@ -217,11 +217,10 @@ func First(subject Enumerable) (retval interface{}, err error) {
 
 	var isOpen bool
 
-	if retval, isOpen = <-subject.Enumerate(nil); isOpen {
+	if retval, isOpen = <-subject.Enumerate(done); isOpen {
 		err = nil
 	}
-
-	subject.Enumerate(done)
+	close(done)
 
 	return
 }
