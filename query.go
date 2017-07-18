@@ -25,14 +25,25 @@ type Transform func(interface{}) interface{}
 // Unfolder defines a function which takes a single value, and exposes many of them as an Enumerator
 type Unfolder func(interface{}) Enumerator
 
+type emptyEnumerable struct{}
+
 var (
 	errNoElements       = errors.New("Enumerator encountered no elements")
 	errMultipleElements = errors.New("Enumerator encountered multiple elements")
 )
 
-//Identity is a trivial Transform which applies no operation on the value.
+// Identity is a trivial Transform which applies no operation on the value.
 var Identity Transform = func(value interface{}) interface{} {
 	return value
+}
+
+// Empty is an Enumerable that has no elements, and will never have any elements.
+var Empty Enumerable = &emptyEnumerable{}
+
+func (e emptyEnumerable) Enumerate(cancel <-chan struct{}) Enumerator {
+	results := make(chan interface{})
+	close(results)
+	return results
 }
 
 // All tests whether or not all items present in an Enumerable meet a criteria.

@@ -5,6 +5,27 @@ import (
 	"time"
 )
 
+func Test_Empty(t *testing.T) {
+	if Any(Empty) {
+		t.Log("empty should not have any elements")
+		t.Fail()
+	}
+
+	if CountAll(Empty) != 0 {
+		t.Log("empty should have counted to zero elements")
+		t.Fail()
+	}
+
+	alwaysTrue := func(x interface{}) bool {
+		return true
+	}
+
+	if Count(Empty, alwaysTrue) != 0 {
+		t.Log("empty should have counted to zero even when discriminating")
+		t.Fail()
+	}
+}
+
 func BenchmarkEnumerator_Sum(b *testing.B) {
 	nums := AsEnumerable(getInitializedSequentialArray()...)
 
