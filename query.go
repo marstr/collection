@@ -325,6 +325,21 @@ func (iter Enumerator) ParallelSelect(operation Transform) Enumerator {
 	return iter
 }
 
+type reverser struct {
+	original Enumerable
+}
+
+// Reverse will enumerate all values of an enumerable, store them in a Stack, then replay them all.
+func Reverse(original Enumerable) Enumerable {
+	return reverser{
+		original: original,
+	}
+}
+
+func (r reverser) Enumerate(cancel <-chan struct{}) Enumerator {
+	return r.original.Enumerate(cancel).Reverse()
+}
+
 // Reverse returns items in the opposite order it encountered them in.
 func (iter Enumerator) Reverse() Enumerator {
 	cache := NewStack()
