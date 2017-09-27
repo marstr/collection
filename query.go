@@ -32,6 +32,18 @@ var (
 	errMultipleElements = errors.New("Enumerator encountered multiple elements")
 )
 
+// IsErrorNoElements determines whethr or not the given error is the result of no values being
+// returned when one or more were expected.
+func IsErrorNoElements(err error) bool {
+	return err == errNoElements
+}
+
+// IsErrorMultipleElements determines whether or not the given error is the result of multiple values
+// being returned when one or zero were expected.
+func IsErrorMultipleElements(err error) bool {
+	return err == errMultipleElements
+}
+
 // Identity is a trivial Transform which applies no operation on the value.
 var Identity Transform = func(value interface{}) interface{} {
 	return value
@@ -443,6 +455,14 @@ func Single(iter Enumerable) (retval interface{}, err error) {
 		firstPass = false
 	}
 	return
+}
+
+// Singlep retrieces the only element from a list that matches a criteria. If
+// no match is found, or two or more are found, `Singlep` returns nil and an
+// error.
+func Singlep(iter Enumerable, pred Predicate) (retval interface{}, err error) {
+	iter = Where(iter, pred)
+	return Single(iter)
 }
 
 type skipper struct {
