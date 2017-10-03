@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 )
 
-// EnumerateDirectoryOptions is a means of configuring a `Directory` instance to including various children in its enumeration without
+// DirectoryOptions is a means of configuring a `Directory` instance to including various children in its enumeration without
 // supplying a `Where` clause later.
 type DirectoryOptions uint
 
