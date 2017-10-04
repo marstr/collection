@@ -3,6 +3,7 @@ package collection
 import (
 	"fmt"
 	"math"
+	"path"
 	"path/filepath"
 	"testing"
 )
@@ -45,6 +46,38 @@ func TestEnumerateDirectoryOptions_UniqueBits(t *testing.T) {
 			t.Fail()
 		}
 	}
+}
+
+func ExampleDirectory_Enumerate() {
+	traverser := Directory{
+		Location: ".",
+		Options:  DirectoryOptionsExcludeDirectories,
+	}
+
+	done := make(chan struct{})
+
+	filesOfInterest := traverser.Enumerate(done).Select(func(subject interface{}) (result interface{}) {
+		cast, ok := subject.(string)
+		if ok {
+			result = path.Base(cast)
+		} else {
+			result = subject
+		}
+		return
+	}).Where(func(subject interface{}) bool {
+		cast, ok := subject.(string)
+		if !ok {
+			return false
+		}
+		return cast == "filesystem_test.go"
+	})
+
+	for entry := range filesOfInterest {
+		fmt.Println(entry.(string))
+	}
+	close(done)
+
+	// Output: filesystem_test.go
 }
 
 func TestDirectory_Enumerate(t *testing.T) {
