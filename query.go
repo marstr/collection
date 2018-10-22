@@ -28,8 +28,8 @@ type Unfolder func(interface{}) Enumerator
 type emptyEnumerable struct{}
 
 var (
-	errNoElements       = errors.New("Enumerator encountered no elements")
-	errMultipleElements = errors.New("Enumerator encountered multiple elements")
+	errNoElements       = errors.New("enumerator encountered no elements")
+	errMultipleElements = errors.New("enumerator encountered multiple elements")
 )
 
 // IsErrorNoElements determines whethr or not the given error is the result of no values being
