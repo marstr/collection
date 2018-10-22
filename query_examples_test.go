@@ -1,14 +1,16 @@
-package collection
+package collection_test
 
 import (
 	"fmt"
 	"sync"
+
+	"github.com/marstr/collection"
 )
 
 func ExampleAsEnumerable() {
 	// When a single value is provided, and it is an array or slice, each value in the array or slice is treated as an enumerable value.
 	original := []int{1, 2, 3, 4, 5}
-	wrapped := AsEnumerable(original)
+	wrapped := collection.AsEnumerable(original)
 
 	for entry := range wrapped.Enumerate(nil) {
 		fmt.Print(entry)
@@ -16,7 +18,7 @@ func ExampleAsEnumerable() {
 	fmt.Println()
 
 	// When multiple values are provided, regardless of their type, they are each treated as enumerable values.
-	wrapped = AsEnumerable("red", "orange", "yellow", "green", "blue", "indigo", "violet")
+	wrapped = collection.AsEnumerable("red", "orange", "yellow", "green", "blue", "indigo", "violet")
 	for entry := range wrapped.Enumerate(nil) {
 		fmt.Println(entry)
 	}
@@ -32,7 +34,7 @@ func ExampleAsEnumerable() {
 }
 
 func ExampleEnumerator_Count() {
-	subject := AsEnumerable("str1", "str1", "str2")
+	subject := collection.AsEnumerable("str1", "str1", "str2")
 	count1 := subject.Enumerate(nil).Count(func(a interface{}) bool {
 		return a == "str1"
 	})
@@ -41,45 +43,46 @@ func ExampleEnumerator_Count() {
 }
 
 func ExampleEnumerator_CountAll() {
-	subject := AsEnumerable('a', 'b', 'c', 'd', 'e')
+	subject := collection.AsEnumerable('a', 'b', 'c', 'd', 'e')
 	fmt.Println(subject.Enumerate(nil).CountAll())
-	// Ouput: 5
+	// Output: 5
 }
 
 func ExampleEnumerator_ElementAt() {
 	done := make(chan struct{})
 	defer close(done)
-	fmt.Print(Fibonacci.Enumerate(done).ElementAt(4))
+	fmt.Print(collection.Fibonacci.Enumerate(done).ElementAt(4))
 	// Output: 3
 }
 
 func ExampleFirst() {
-	empty := NewQueue()
-	notEmpty := NewQueue(1, 2, 3, 4)
+	empty := collection.NewQueue()
+	notEmpty := collection.NewQueue(1, 2, 3, 4)
 
-	fmt.Println(First(empty))
-	fmt.Println(First(notEmpty))
+	fmt.Println(collection.First(empty))
+	fmt.Println(collection.First(notEmpty))
+
 	// Output:
 	// <nil> Enumerator encountered no elements
 	// 1 <nil>
 }
 
 func ExampleLast() {
-	subject := NewList(1, 2, 3, 4)
-	fmt.Println(Last(subject))
+	subject := collection.NewList(1, 2, 3, 4)
+	fmt.Println(collection.Last(subject))
 	// Output: 4
 }
 
 func ExampleEnumerator_Last() {
-	subject := AsEnumerable(1, 2, 3)
+	subject := collection.AsEnumerable(1, 2, 3)
 	fmt.Print(subject.Enumerate(nil).Last())
 	//Output: 3
 }
 
 func ExampleMerge() {
-	a := AsEnumerable(1, 2, 4)
-	b := AsEnumerable(8, 16, 32)
-	c := Merge(a, b)
+	a := collection.AsEnumerable(1, 2, 4)
+	b := collection.AsEnumerable(8, 16, 32)
+	c := collection.Merge(a, b)
 	sum := 0
 	for x := range c.Enumerate(nil) {
 		sum += x.(int)
@@ -97,7 +100,7 @@ func ExampleMerge() {
 }
 
 func ExampleEnumerator_Reverse() {
-	a := AsEnumerable(1, 2, 3).Enumerate(nil)
+	a := collection.AsEnumerable(1, 2, 3).Enumerate(nil)
 	a = a.Reverse()
 	fmt.Println(a.ToSlice())
 	// Output: [3 2 1]
@@ -106,17 +109,17 @@ func ExampleEnumerator_Reverse() {
 func ExampleSelect() {
 	const offset = 'a' - 1
 
-	subject := AsEnumerable('a', 'b', 'c')
-	subject = Select(subject, func(a interface{}) interface{} {
+	subject := collection.AsEnumerable('a', 'b', 'c')
+	subject = collection.Select(subject, func(a interface{}) interface{} {
 		return a.(rune) - offset
 	})
 
-	fmt.Println(ToSlice(subject))
+	fmt.Println(collection.ToSlice(subject))
 	// Output: [1 2 3]
 }
 
 func ExampleEnumerator_Select() {
-	subject := AsEnumerable('a', 'b', 'c').Enumerate(nil)
+	subject := collection.AsEnumerable('a', 'b', 'c').Enumerate(nil)
 	const offset = 'a' - 1
 	results := subject.Select(func(a interface{}) interface{} {
 		return a.(rune) - offset
@@ -130,40 +133,40 @@ func ExampleEnumerator_SelectMany() {
 
 	type BrewHouse struct {
 		Name  string
-		Beers Enumerable
+		Beers collection.Enumerable
 	}
 
-	breweries := AsEnumerable(
+	breweries := collection.AsEnumerable(
 		BrewHouse{
 			"Mac & Jacks",
-			AsEnumerable(
+			collection.AsEnumerable(
 				"African Amber",
 				"Ibis IPA",
 			),
 		},
 		BrewHouse{
 			"Post Doc",
-			AsEnumerable(
+			collection.AsEnumerable(
 				"Prereq Pale",
 			),
 		},
 		BrewHouse{
 			"Resonate",
-			AsEnumerable(
+			collection.AsEnumerable(
 				"Comfortably Numb IPA",
 				"Lithium Altbier",
 			),
 		},
 		BrewHouse{
 			"Triplehorn",
-			AsEnumerable(
+			collection.AsEnumerable(
 				"Samson",
 				"Pepper Belly",
 			),
 		},
 	)
 
-	beers := breweries.Enumerate(nil).SelectMany(func(brewer interface{}) Enumerator {
+	beers := breweries.Enumerate(nil).SelectMany(func(brewer interface{}) collection.Enumerator {
 		return brewer.(BrewHouse).Beers.Enumerate(nil)
 	})
 
@@ -185,7 +188,7 @@ func ExampleSkip() {
 	done := make(chan struct{})
 	defer close(done)
 
-	trimmed := Take(Skip(Fibonacci, 1), 3)
+	trimmed := collection.Take(collection.Skip(collection.Fibonacci, 1), 3)
 	for entry := range trimmed.Enumerate(done) {
 		fmt.Println(entry)
 	}
@@ -196,7 +199,7 @@ func ExampleSkip() {
 }
 
 func ExampleEnumerator_Skip() {
-	subject := AsEnumerable(1, 2, 3, 4, 5, 6, 7)
+	subject := collection.AsEnumerable(1, 2, 3, 4, 5, 6, 7)
 	skipped := subject.Enumerate(nil).Skip(5)
 	for entry := range skipped {
 		fmt.Println(entry)
@@ -210,7 +213,7 @@ func ExampleTake() {
 	done := make(chan struct{})
 	defer close(done)
 
-	taken := Take(Fibonacci, 4)
+	taken := collection.Take(collection.Fibonacci, 4)
 	for entry := range taken.Enumerate(done) {
 		fmt.Println(entry)
 	}
@@ -225,7 +228,7 @@ func ExampleEnumerator_Take() {
 	done := make(chan struct{})
 	defer close(done)
 
-	taken := Fibonacci.Enumerate(done).Skip(4).Take(2)
+	taken := collection.Fibonacci.Enumerate(done).Skip(4).Take(2)
 	for entry := range taken {
 		fmt.Println(entry)
 	}
@@ -235,7 +238,7 @@ func ExampleEnumerator_Take() {
 }
 
 func ExampleTakeWhile() {
-	taken := TakeWhile(Fibonacci, func(x interface{}, n uint) bool {
+	taken := collection.TakeWhile(collection.Fibonacci, func(x interface{}, n uint) bool {
 		return x.(int) < 10
 	})
 	for entry := range taken.Enumerate(nil) {
@@ -252,7 +255,7 @@ func ExampleTakeWhile() {
 }
 
 func ExampleEnumerator_TakeWhile() {
-	taken := Fibonacci.Enumerate(nil).TakeWhile(func(x interface{}, n uint) bool {
+	taken := collection.Fibonacci.Enumerate(nil).TakeWhile(func(x interface{}, n uint) bool {
 		return x.(int) < 6
 	})
 	for entry := range taken {
@@ -268,7 +271,7 @@ func ExampleEnumerator_TakeWhile() {
 }
 
 func ExampleEnumerator_Tee() {
-	base := AsEnumerable(1, 2, 4)
+	base := collection.AsEnumerable(1, 2, 4)
 	left, right := base.Enumerate(nil).Tee()
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -299,8 +302,8 @@ func ExampleEnumerator_Tee() {
 }
 
 func ExampleUCount() {
-	subject := NewStack(9, 'a', "str1")
-	result := UCount(subject, func(a interface{}) bool {
+	subject := collection.NewStack(9, 'a', "str1")
+	result := collection.UCount(subject, func(a interface{}) bool {
 		_, ok := a.(string)
 		return ok
 	})
@@ -309,7 +312,7 @@ func ExampleUCount() {
 }
 
 func ExampleEnumerator_UCount() {
-	subject := AsEnumerable("str1", "str1", "str2")
+	subject := collection.AsEnumerable("str1", "str1", "str2")
 	count1 := subject.Enumerate(nil).UCount(func(a interface{}) bool {
 		return a == "str1"
 	})
@@ -318,13 +321,13 @@ func ExampleEnumerator_UCount() {
 }
 
 func ExampleUCountAll() {
-	subject := NewStack(8, 9, 10, 11)
-	fmt.Println(UCountAll(subject))
+	subject := collection.NewStack(8, 9, 10, 11)
+	fmt.Println(collection.UCountAll(subject))
 	// Output: 4
 }
 
 func ExampleEnumerator_UCountAll() {
-	subject := AsEnumerable('a', 2, "str1")
+	subject := collection.AsEnumerable('a', 2, "str1")
 	fmt.Println(subject.Enumerate(nil).UCountAll())
 	// Output: 3
 }
@@ -332,7 +335,7 @@ func ExampleEnumerator_UCountAll() {
 func ExampleEnumerator_Where() {
 	done := make(chan struct{})
 	defer close(done)
-	results := Fibonacci.Enumerate(done).Where(func(a interface{}) bool {
+	results := collection.Fibonacci.Enumerate(done).Where(func(a interface{}) bool {
 		return a.(int) > 8
 	}).Take(3)
 	fmt.Println(results.ToSlice())
@@ -340,9 +343,9 @@ func ExampleEnumerator_Where() {
 }
 
 func ExampleWhere() {
-	results := Where(AsEnumerable(1, 2, 3, 4, 5), func(a interface{}) bool {
+	results := collection.Where(collection.AsEnumerable(1, 2, 3, 4, 5), func(a interface{}) bool {
 		return a.(int) < 3
 	})
-	fmt.Println(ToSlice(results))
+	fmt.Println(collection.ToSlice(results))
 	// Output: [1 2]
 }
