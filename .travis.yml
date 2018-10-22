@@ -1,12 +1,17 @@
 language: go
 
-go: 
-  - 1.7
-  - 1.8
-  - 1.9
+go:
+  - 1.11
+  - 1.x
+
+env:
+  - GO111MODULE=on
+
+matrix:
+  fast_finish: true
 
 install:
- - go get -u github.com/golang/lint/golint
+ - go get -u golang.org/x/lint/golint
 
 script:
  - go test -v -cover
