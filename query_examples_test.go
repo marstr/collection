@@ -63,7 +63,7 @@ func ExampleFirst() {
 	fmt.Println(collection.First(notEmpty))
 
 	// Output:
-	// <nil> Enumerator encountered no elements
+	// <nil> enumerator encountered no elements
 	// 1 <nil>
 }
 

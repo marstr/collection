@@ -1,4 +1,4 @@
-// Collection seeks to provide an expressive and readable way of working with basic data structures in Go.
+// Package collection seeks to provide an expressive and readable way of working with basic data structures in Go.
 //
 // As a former .NET developer, I deeply missed writing programs in the style of Linq. Doing so enables concurrent/
 // parallel reactive programs to be written in a snap. Go's functional nature enables us to have a very similar, if more
