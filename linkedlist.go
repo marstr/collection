@@ -19,6 +19,7 @@ type LinkedList struct {
 type llNode struct {
 	payload interface{}
 	next    *llNode
+	prev    *llNode
 }
 
 // Comparator is a function which evaluates two values to determine their relation to one another.
@@ -45,23 +46,30 @@ func NewLinkedList(entries ...interface{}) *LinkedList {
 
 // AddBack creates an entry in the LinkedList that is logically at the back of the list.
 func (list *LinkedList) AddBack(entry interface{}) {
+	list.key.Lock()
+	defer list.key.Unlock()
+
 	toAppend := &llNode{
 		payload: entry,
 	}
 
-	list.key.Lock()
-	defer list.key.Unlock()
+	list.addNodeBack(toAppend)
+}
+
+func (list *LinkedList) addNodeBack(node *llNode) {
 
 	list.length++
 
+	node.prev = list.last
+
 	if list.first == nil {
-		list.first = toAppend
-		list.last = toAppend
+		list.first = node
+		list.last = node
 		return
 	}
 
-	list.last.next = toAppend
-	list.last = toAppend
+	list.last.next = node
+	list.last = node
 }
 
 // AddFront creates an entry in the LinkedList that is logically at the front of the list.
@@ -73,14 +81,20 @@ func (list *LinkedList) AddFront(entry interface{}) {
 	list.key.Lock()
 	defer list.key.Unlock()
 
+	list.addNodeFront(toAppend)
+}
+
+func (list *LinkedList) addNodeFront(node *llNode) {
 	list.length++
 
-	toAppend.next = list.first
+	node.next = list.first
 	if list.first == nil {
-		list.last = toAppend
+		list.last = node
+	} else {
+		list.first.prev = node
 	}
 
-	list.first = toAppend
+	list.first = node
 }
 
 // Enumerate creates a new instance of Enumerable which can be executed on.
@@ -197,6 +211,37 @@ func (list *LinkedList) RemoveBack() (interface{}, bool) {
 		node.next = nil
 	}
 	return retval, true
+}
+
+// removeNode
+func (list *LinkedList) removeNode(target *llNode) {
+	if target == nil {
+		return
+	}
+
+	if target.next != nil {
+		target.next.prev = target.prev
+	}
+
+	if target.prev != nil {
+		target.prev.next = target.next
+	}
+
+	list.length--
+
+	if list.length == 0 {
+		list.first = nil
+		list.last = nil
+		return
+	}
+
+	if list.first == target {
+		list.first = target.next
+	}
+
+	if list.last == target {
+		list.last = target.prev
+	}
 }
 
 // Sort rearranges the positions of the entries in this list so that they are
