@@ -1,69 +1,6 @@
 package collection
 
-import "fmt"
 import "testing"
-
-func ExampleLinkedList_AddFront() {
-	subject := NewLinkedList(2, 3)
-	subject.AddFront(1)
-	result, _ := subject.PeekFront()
-	fmt.Println(result)
-	// Output: 1
-}
-
-func ExampleLinkedList_AddBack() {
-	subject := NewLinkedList(2, 3, 5)
-	subject.AddBack(8)
-	result, _ := subject.PeekBack()
-	fmt.Println(result)
-	fmt.Println(subject.Length())
-	// Output:
-	// 8
-	// 4
-}
-
-func ExampleLinkedList_Enumerate() {
-	subject := NewLinkedList(2, 3, 5, 8)
-	results := subject.Enumerate(nil).Select(func(a interface{}) interface{} {
-		return -1 * a.(int)
-	})
-	for entry := range results {
-		fmt.Println(entry)
-	}
-	// Output:
-	// -2
-	// -3
-	// -5
-	// -8
-}
-
-func ExampleLinkedList_Get() {
-	subject := NewLinkedList(2, 3, 5, 8)
-	val, _ := subject.Get(2)
-	fmt.Println(val)
-	// Output: 5
-}
-
-func TestLinkedList_Get_OutsideBounds(t *testing.T) {
-	subject := NewLinkedList(2, 3, 5, 8, 13, 21)
-	result, ok := subject.Get(10)
-	if !(result == nil && ok == false) {
-		t.Logf("got: %v %v\nwant: %v %v", result, ok, nil, false)
-		t.Fail()
-	}
-}
-
-func ExampleNewLinkedList() {
-	subject1 := NewLinkedList('a', 'b', 'c', 'd', 'e')
-	fmt.Println(subject1.Length())
-
-	slice := []interface{}{1, 2, 3, 4, 5, 6}
-	subject2 := NewLinkedList(slice...)
-	fmt.Println(subject2.Length())
-	// Output:
-	// 5
-	// 6
-}
 
 func TestLinkedList_findLast_empty(t *testing.T) {
 	if result := findLast(nil); result != nil {
@@ -200,45 +137,10 @@ func TestLinkedList_mergeSort_repair(t *testing.T) {
 	}
 }
 
-func ExampleLinkedList_Sort() {
-	// Sorti sorts into ascending order, this example demonstrates sorting
-	// into descending order.
-	subject := NewLinkedList(2, 4, 3, 5, 7, 7)
-	subject.Sort(func(a, b interface{}) (int, error) {
-		castA, ok := a.(int)
-		if !ok {
-			return 0, ErrUnexpectedType
-		}
-		castB, ok := b.(int)
-		if !ok {
-			return 0, ErrUnexpectedType
-		}
-
-		return castB - castA, nil
-	})
-	fmt.Println(subject)
-	// Output: [7 7 5 4 3 2]
+func UncheckedComparatori(a, b interface{}) (int, error) {
+	return a.(int) - b.(int), nil
 }
 
-func ExampleLinkedList_Sorta() {
-	subject := NewLinkedList("charlie", "alfa", "bravo", "delta")
-	subject.Sorta()
-	for _, entry := range subject.ToSlice() {
-		fmt.Println(entry.(string))
-	}
-	// Output:
-	// alfa
-	// bravo
-	// charlie
-	// delta
-}
-
-func ExampleLinkedList_Sorti() {
-	subject := NewLinkedList(7, 3, 2, 2, 3, 6)
-	subject.Sorti()
-	fmt.Println(subject)
-	// Output: [2 2 3 3 6 7]
-}
 
 func TestLinkedList_Sorti(t *testing.T) {
 	testCases := []struct {
@@ -393,30 +295,6 @@ func TestLinkedList_split_Double(t *testing.T) {
 	}
 }
 
-func UncheckedComparatori(a, b interface{}) (int, error) {
-	return a.(int) - b.(int), nil
-}
-
-func ExampleLinkedList_String() {
-	subject1 := NewLinkedList()
-	for i := 0; i < 20; i++ {
-		subject1.AddBack(i)
-	}
-	fmt.Println(subject1)
-
-	subject2 := NewLinkedList(1, 2, 3)
-	fmt.Println(subject2)
-	// Output:
-	// [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 ...]
-	// [1 2 3]
-}
-
-func ExampleLinkedList_Swap() {
-	subject := NewLinkedList(2, 3, 5, 8, 13)
-	subject.Swap(1, 3)
-	fmt.Println(subject)
-	// Output: [2 8 5 3 13]
-}
 
 func TestLinkedList_Swap_OutOfBounds(t *testing.T) {
 	subject := NewLinkedList(2, 3)
@@ -441,4 +319,112 @@ func TestLinkedList_Swap_OutOfBounds(t *testing.T) {
 		t.Logf("got: %s\nwant: %s", gotStr, wantStr)
 		t.Fail()
 	}
+}
+
+func TestLinkedList_Get_OutsideBounds(t *testing.T) {
+	subject := NewLinkedList(2, 3, 5, 8, 13, 21)
+	result, ok := subject.Get(10)
+	if !(result == nil && ok == false) {
+		t.Logf("got: %v %v\nwant: %v %v", result, ok, nil, false)
+		t.Fail()
+	}
+}
+
+func TestLinkedList_removeNode(t *testing.T) {
+	removeHead := func(t *testing.T) {
+		subject := NewLinkedList(1, 2, 3)
+
+		subject.removeNode(subject.first)
+
+		if subject.length != 2 {
+			t.Logf("got %d, want %d", subject.length, 2)
+			t.Fail()
+		}
+
+		if first, ok := subject.Get(0); ok {
+			if first.(int) != 2 {
+				t.Logf("got %d, want %d", first.(int), 2)
+				t.Fail()
+			}
+		} else {
+			t.Logf("no item at position 0!")
+			t.Fail()
+		}
+
+		if second, ok := subject.Get(1); ok {
+			if second.(int) != 3 {
+				t.Logf("got %d, want %d", second.(int), 3)
+				t.Fail()
+			}
+		} else {
+			t.Logf("no item at position 1!")
+			t.Fail()
+		}
+	}
+
+	removeTail := func(t *testing.T) {
+		subject := NewLinkedList(1, 2, 3)
+
+		subject.removeNode(subject.last)
+
+		if subject.length != 2 {
+			t.Logf("got %d, want %d", subject.length, 2)
+			t.Fail()
+		}
+
+		if first, ok := subject.Get(0); ok {
+			if first.(int) != 1 {
+				t.Logf("got %d, want %d", first.(int), 1)
+				t.Fail()
+			}
+		} else {
+			t.Logf("no item at position 0!")
+			t.Fail()
+		}
+
+		if second, ok := subject.Get(1); ok {
+			if second.(int) != 2 {
+				t.Logf("got %d, want %d", second.(int), 2)
+				t.Fail()
+			}
+		} else {
+			t.Logf("no item at position 1!")
+			t.Fail()
+		}
+	}
+
+	removeMiddle := func(t *testing.T) {
+		subject := NewLinkedList(1, 2, 3)
+
+		subject.removeNode(subject.first.next)
+
+		if subject.length != 2 {
+			t.Logf("got %d, want %d", subject.length, 2)
+			t.Fail()
+		}
+
+		if first, ok := subject.Get(0); ok {
+			if first.(int) != 1 {
+				t.Logf("got %d, want %d", first.(int), 1)
+				t.Fail()
+			}
+		} else {
+			t.Logf("no item at position 0!")
+			t.Fail()
+		}
+
+		if second, ok := subject.Get(1); ok {
+			if second.(int) != 3 {
+				t.Logf("got %d, want %d", second.(int), 3)
+				t.Fail()
+			}
+		} else {
+			t.Logf("no item at position 1!")
+			t.Fail()
+		}
+	}
+
+	t.Run("RemoveHead", removeHead)
+	t.Run("RemoveTail", removeTail)
+	t.Run("RemoveMiddle", removeMiddle)
 }
