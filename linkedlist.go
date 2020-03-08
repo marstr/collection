@@ -19,7 +19,7 @@ type LinkedList struct {
 type llNode struct {
 	payload interface{}
 	next    *llNode
-	prev *llNode
+	prev    *llNode
 }
 
 // Comparator is a function which evaluates two values to determine their relation to one another.

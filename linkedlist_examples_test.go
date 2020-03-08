@@ -59,8 +59,6 @@ func ExampleNewLinkedList() {
 	// 6
 }
 
-
-
 func ExampleLinkedList_Sort() {
 	// Sorti sorts into ascending order, this example demonstrates sorting
 	// into descending order.
@@ -100,8 +98,6 @@ func ExampleLinkedList_Sorti() {
 	fmt.Println(subject)
 	// Output: [2 2 3 3 6 7]
 }
-
-
 
 func ExampleLinkedList_String() {
 	subject1 := collection.NewLinkedList()

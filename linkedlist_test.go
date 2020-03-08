@@ -141,7 +141,6 @@ func UncheckedComparatori(a, b interface{}) (int, error) {
 	return a.(int) - b.(int), nil
 }
 
-
 func TestLinkedList_Sorti(t *testing.T) {
 	testCases := []struct {
 		*LinkedList
@@ -294,7 +293,6 @@ func TestLinkedList_split_Double(t *testing.T) {
 		t.Logf("got: %d\nwant: %d", right.payload, 2)
 	}
 }
-
 
 func TestLinkedList_Swap_OutOfBounds(t *testing.T) {
 	subject := NewLinkedList(2, 3)
