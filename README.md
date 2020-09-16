@@ -1,5 +1,5 @@
 # collection
-[![GoDoc](https://godoc.org/github.com/marstr/collection?status.svg)](https://godoc.org/github.com/marstr/collection) [![Build Status](https://travis-ci.org/marstr/collection.svg?branch=master)](https://travis-ci.org/marstr/collection) [![Go Report Card](https://goreportcard.com/badge/github.com/marstr/collection)](https://goreportcard.com/report/github.com/marstr/collection)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/marstr/collection)](https://pkg.go.dev/github.com/marstr/collection) ![Build and Test](https://github.com/marstr/collection/workflows/Build%20and%20Test/badge.svg)
 
 # Usage
 
