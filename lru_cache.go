@@ -6,7 +6,7 @@ import "sync"
 // is evicted from the cache.
 type LRUCache struct {
 	capacity uint
-	entries map[interface{}]lruEntry
+	entries map[interface{}]*lruEntry
 	touched *LinkedList
 	key sync.RWMutex
 }
@@ -21,7 +21,7 @@ type lruEntry struct {
 func NewLRUCache(capacity uint) *LRUCache {
 	return &LRUCache{
 		capacity: capacity,
-		entries:  make(map[interface{}]lruEntry, capacity + 1),
+		entries:  make(map[interface{}]*lruEntry, capacity + 1),
 		touched:  NewLinkedList(),
 	}
 }
@@ -35,21 +35,21 @@ func (lru *LRUCache) Put(key interface{}, value interface{}) {
 	if ok {
 		lru.touched.removeNode(entry.Node)
 	} else {
-		entry = lruEntry{
+		entry = &lruEntry{
 			Node:  &llNode{},
 			Key: key,
-			Value: value,
 		}
 	}
 
 	entry.Node.payload = entry
+	entry.Value = value
 	lru.touched.addNodeFront(entry.Node)
 	lru.entries[key] = entry
 
 	if lru.touched.Length() > lru.capacity {
 		removed, ok := lru.touched.RemoveBack()
 		if ok {
-			delete(lru.entries, removed.(lruEntry).Key)
+			delete(lru.entries, removed.(*lruEntry).Key)
 		}
 	}
 }
@@ -66,7 +66,7 @@ func (lru *LRUCache) Get(key interface{}) (interface{}, bool) {
 
 	lru.touched.removeNode(entry.Node)
 	lru.touched.addNodeFront(entry.Node)
-	return entry.Node.payload.(lruEntry).Value, true
+	return entry.Node.payload.(*lruEntry).Value, true
 }
 
 // Remove explicitly takes an item out of the cache.
@@ -97,7 +97,7 @@ func (lru *LRUCache) Enumerate(cancel <-chan struct{}) Enumerator {
 
 		for entry := range nested {
 			select {
-			case retval <- entry.(lruEntry).Value:
+			case retval <- entry.(*lruEntry).Value:
 				break
 			case <-cancel:
 				return
@@ -121,7 +121,7 @@ func (lru *LRUCache) EnumerateKeys(cancel <-chan struct{}) Enumerator {
 
 		for entry := range nested {
 			select {
-			case retval <- entry.(lruEntry).Key:
+			case retval <- entry.(*lruEntry).Key:
 				break
 			case <-cancel:
 				return
