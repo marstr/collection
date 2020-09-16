@@ -350,6 +350,10 @@ func (list *LinkedList) Swap(x, y uint) error {
 	return nil
 }
 
+func (list *LinkedList) moveToFront(node *llNode) {
+
+}
+
 // ToSlice converts the contents of the LinkedList into a slice.
 func (list *LinkedList) ToSlice() []interface{} {
 	return list.Enumerate(nil).ToSlice()
