@@ -1,5 +1,5 @@
 # collection
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/marstr/collection)](https://pkg.go.dev/github.com/marstr/collection) ![Build and Test](https://github.com/marstr/collection/workflows/Build%20and%20Test/badge.svg)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/marstr/collection)](https://pkg.go.dev/github.com/marstr/collection) [![Build and Test](https://github.com/marstr/collection/workflows/Build%20and%20Test/badge.svg)](https://github.com/marstr/collection/actions?query=workflow%3A"Build+and+Test")
 
 # Usage
 
