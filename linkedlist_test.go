@@ -141,6 +141,14 @@ func UncheckedComparatori(a, b interface{}) (int, error) {
 	return a.(int) - b.(int), nil
 }
 
+func TestLinkedList_RemoveBack_single(t *testing.T) {
+	subject := NewLinkedList(1)
+	subject.RemoveBack()
+	if subject.Length() != 0 {
+		t.Fail()
+	}
+}
+
 func TestLinkedList_Sorti(t *testing.T) {
 	testCases := []struct {
 		*LinkedList

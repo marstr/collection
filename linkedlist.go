@@ -207,8 +207,8 @@ func (list *LinkedList) RemoveBack() (interface{}, bool) {
 	if list.length == 0 {
 		list.first = nil
 	} else {
-		node, _ := get(list.first, list.length-1)
-		node.next = nil
+		list.last = list.last.prev
+		list.last.next = nil
 	}
 	return retval, true
 }
