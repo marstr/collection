@@ -45,6 +45,8 @@ func NewLinkedList(entries ...interface{}) *LinkedList {
 }
 
 // AddBack creates an entry in the LinkedList that is logically at the back of the list.
+//
+// O(1)
 func (list *LinkedList) AddBack(entry interface{}) {
 	list.key.Lock()
 	defer list.key.Unlock()
@@ -73,6 +75,8 @@ func (list *LinkedList) addNodeBack(node *llNode) {
 }
 
 // AddFront creates an entry in the LinkedList that is logically at the front of the list.
+//
+// O(1)
 func (list *LinkedList) AddFront(entry interface{}) {
 	toAppend := &llNode{
 		payload: entry,
@@ -97,7 +101,37 @@ func (list *LinkedList) addNodeFront(node *llNode) {
 	list.first = node
 }
 
+// AddAt inserts an entry in the LinkedList at the specified position. That position must be no larger than the current
+// length of the list.
+//
+// O(pos)
+func (list *LinkedList) AddAt(entry interface{}, pos uint) error {
+	toAdd := &llNode{
+		payload: entry,
+	}
+
+	list.key.Lock()
+	defer list.key.Unlock()
+
+	return list.addNodeAt(toAdd, pos)
+}
+
+func (list *LinkedList) addNodeAt(node *llNode, pos uint) error {
+	node.next, _ = get(list.first, pos)
+	originalPrev := node.next.prev
+
+	if node.next != nil {
+		node.prev = node.next.prev
+	}
+
+	if node.prev != nil {
+		node.prev.next = node
+	}
+}
+
 // Enumerate creates a new instance of Enumerable which can be executed on.
+//
+// O(n)
 func (list *LinkedList) Enumerate(cancel <-chan struct{}) Enumerator {
 	retval := make(chan interface{})
 
@@ -123,6 +157,8 @@ func (list *LinkedList) Enumerate(cancel <-chan struct{}) Enumerator {
 
 // Get finds the value from the LinkedList.
 // pos is expressed as a zero-based index begining from the 'front' of the list.
+//
+// O(pos)
 func (list *LinkedList) Get(pos uint) (interface{}, bool) {
 	list.key.RLock()
 	defer list.key.RUnlock()
@@ -134,6 +170,8 @@ func (list *LinkedList) Get(pos uint) (interface{}, bool) {
 }
 
 // IsEmpty tests the list to determine if it is populate or not.
+//
+// O(1)
 func (list *LinkedList) IsEmpty() bool {
 	list.key.RLock()
 	defer list.key.RUnlock()
@@ -142,6 +180,8 @@ func (list *LinkedList) IsEmpty() bool {
 }
 
 // Length returns the number of elements present in the LinkedList.
+//
+// O(1)
 func (list *LinkedList) Length() uint {
 	list.key.RLock()
 	defer list.key.RUnlock()
@@ -150,6 +190,8 @@ func (list *LinkedList) Length() uint {
 }
 
 // PeekBack returns the entry logicall stored at the back of the list without removing it.
+//
+// O(1)
 func (list *LinkedList) PeekBack() (interface{}, bool) {
 	list.key.RLock()
 	defer list.key.RUnlock()
@@ -161,6 +203,8 @@ func (list *LinkedList) PeekBack() (interface{}, bool) {
 }
 
 // PeekFront returns the entry logically stored at the front of this list without removing it.
+//
+// O(1)
 func (list *LinkedList) PeekFront() (interface{}, bool) {
 	list.key.RLock()
 	defer list.key.RUnlock()
@@ -172,6 +216,8 @@ func (list *LinkedList) PeekFront() (interface{}, bool) {
 }
 
 // RemoveFront returns the entry logically stored at the front of this list and removes it.
+//
+// O(1)
 func (list *LinkedList) RemoveFront() (interface{}, bool) {
 	list.key.Lock()
 	defer list.key.Unlock()
@@ -193,6 +239,8 @@ func (list *LinkedList) RemoveFront() (interface{}, bool) {
 }
 
 // RemoveBack returns the entry logically stored at the back of this list and removes it.
+//
+// O(1)
 func (list *LinkedList) RemoveBack() (interface{}, bool) {
 	list.key.Lock()
 	defer list.key.Unlock()
@@ -246,6 +294,8 @@ func (list *LinkedList) removeNode(target *llNode) {
 
 // Sort rearranges the positions of the entries in this list so that they are
 // ascending.
+//
+// O(n log n)
 func (list *LinkedList) Sort(comparator Comparator) error {
 	list.key.Lock()
 	defer list.key.Unlock()
@@ -260,6 +310,8 @@ func (list *LinkedList) Sort(comparator Comparator) error {
 
 // Sorta rearranges the position of string entries in this list so that they
 // are ascending.
+//
+// O(n log n)
 func (list *LinkedList) Sorta() error {
 	list.key.Lock()
 	defer list.key.Unlock()
@@ -283,6 +335,8 @@ func (list *LinkedList) Sorta() error {
 
 // Sorti rearranges the position of integer entries in this list so that they
 // are ascending.
+//
+// O(n log n)
 func (list *LinkedList) Sorti() (err error) {
 	list.key.Lock()
 	defer list.key.Unlock()
@@ -307,6 +361,7 @@ func (list *LinkedList) Sorti() (err error) {
 }
 
 // String prints upto the first fifteen elements of the list in string format.
+// O(n)
 func (list *LinkedList) String() string {
 	list.key.RLock()
 	defer list.key.RUnlock()
@@ -328,6 +383,8 @@ func (list *LinkedList) String() string {
 
 // Swap switches the positions in which two values are stored in this list.
 // x and y represent the indexes of the items that should be swapped.
+//
+// O(1)
 func (list *LinkedList) Swap(x, y uint) error {
 	list.key.Lock()
 	defer list.key.Unlock()
@@ -348,10 +405,6 @@ func (list *LinkedList) Swap(x, y uint) error {
 	xNode.payload = yNode.payload
 	yNode.payload = temp
 	return nil
-}
-
-func (list *LinkedList) moveToFront(node *llNode) {
-
 }
 
 // ToSlice converts the contents of the LinkedList into a slice.
