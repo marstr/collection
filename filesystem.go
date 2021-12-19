@@ -1,7 +1,7 @@
 package collection
 
 import (
-	"errors"
+	"context"
 	"os"
 	"path/filepath"
 )
@@ -40,7 +40,7 @@ func (d Directory) applyOptions(loc string, info os.FileInfo) bool {
 }
 
 // Enumerate lists the items in a `Directory`
-func (d Directory) Enumerate(cancel <-chan struct{}) Enumerator {
+func (d Directory) Enumerate(ctx context.Context) Enumerator {
 	results := make(chan interface{})
 
 	go func() {
@@ -64,8 +64,8 @@ func (d Directory) Enumerate(cancel <-chan struct{}) Enumerator {
 				select {
 				case results <- currentLocation:
 					// Intentionally Left Blank
-				case <-cancel:
-					err = errors.New("directory enumeration cancelled")
+				case <-ctx.Done():
+					err = ctx.Err()
 				}
 			}
 

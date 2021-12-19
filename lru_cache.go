@@ -1,19 +1,22 @@
 package collection
 
-import "sync"
+import (
+	"context"
+	"sync"
+)
 
 // LRUCache hosts up to a given number of items. When more are presented, the least recently used item
 // is evicted from the cache.
 type LRUCache struct {
 	capacity uint
-	entries map[interface{}]*lruEntry
-	touched *LinkedList
-	key sync.RWMutex
+	entries  map[interface{}]*lruEntry
+	touched  *LinkedList
+	key      sync.RWMutex
 }
 
 type lruEntry struct {
-	Node *llNode
-	Key interface{}
+	Node  *llNode
+	Key   interface{}
 	Value interface{}
 }
 
@@ -21,7 +24,7 @@ type lruEntry struct {
 func NewLRUCache(capacity uint) *LRUCache {
 	return &LRUCache{
 		capacity: capacity,
-		entries:  make(map[interface{}]*lruEntry, capacity + 1),
+		entries:  make(map[interface{}]*lruEntry, capacity+1),
 		touched:  NewLinkedList(),
 	}
 }
@@ -36,8 +39,8 @@ func (lru *LRUCache) Put(key interface{}, value interface{}) {
 		lru.touched.removeNode(entry.Node)
 	} else {
 		entry = &lruEntry{
-			Node:  &llNode{},
-			Key: key,
+			Node: &llNode{},
+			Key:  key,
 		}
 	}
 
@@ -85,10 +88,10 @@ func (lru *LRUCache) Remove(key interface{}) bool {
 }
 
 // Enumerate lists each value in the cache.
-func (lru *LRUCache) Enumerate(cancel <-chan struct{}) Enumerator {
+func (lru *LRUCache) Enumerate(ctx context.Context) Enumerator {
 	retval := make(chan interface{})
 
-	nested := lru.touched.Enumerate(cancel)
+	nested := lru.touched.Enumerate(ctx)
 
 	go func() {
 		lru.key.RLock()
@@ -99,7 +102,7 @@ func (lru *LRUCache) Enumerate(cancel <-chan struct{}) Enumerator {
 			select {
 			case retval <- entry.(*lruEntry).Value:
 				break
-			case <-cancel:
+			case <-ctx.Done():
 				return
 			}
 		}
@@ -109,21 +112,21 @@ func (lru *LRUCache) Enumerate(cancel <-chan struct{}) Enumerator {
 }
 
 // EnumerateKeys lists each key in the cache.
-func (lru *LRUCache) EnumerateKeys(cancel <-chan struct{}) Enumerator {
+func (lru *LRUCache) EnumerateKeys(ctx context.Context) Enumerator {
 	retval := make(chan interface{})
 
-	nested := lru.touched.Enumerate(cancel)
+	nested := lru.touched.Enumerate(ctx)
 
 	go func() {
 		lru.key.RLock()
-		defer  lru.key.RUnlock()
+		defer lru.key.RUnlock()
 		defer close(retval)
 
 		for entry := range nested {
 			select {
 			case retval <- entry.(*lruEntry).Key:
 				break
-			case <-cancel:
+			case <-ctx.Done():
 				return
 			}
 		}

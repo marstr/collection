@@ -11,7 +11,7 @@
 // 		Location: "./",
 // 	}
 //
-// 	results := myDir.Enumerate(nil).Where(func(x interface{}) bool {
+// 	results := myDir.Enumerate(context.Background()).Where(func(x interface{}) bool {
 // 		return strings.HasSuffix(x.(string), ".go")
 // 	})
 //

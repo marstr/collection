@@ -1,6 +1,7 @@
 package collection
 
 import (
+	"context"
 	"testing"
 	"time"
 )
@@ -31,7 +32,7 @@ func BenchmarkEnumerator_Sum(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		for range nums.Enumerate(nil).Select(sleepIdentity) {
+		for range nums.Enumerate(context.Background()).Select(sleepIdentity) {
 			// Intentionally Left Blank
 		}
 	}

@@ -1,6 +1,7 @@
 package collection
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"path"
@@ -54,9 +55,7 @@ func ExampleDirectory_Enumerate() {
 		Options:  DirectoryOptionsExcludeDirectories,
 	}
 
-	done := make(chan struct{})
-
-	filesOfInterest := traverser.Enumerate(done).Select(func(subject interface{}) (result interface{}) {
+	filesOfInterest := traverser.Enumerate(context.Background()).Select(func(subject interface{}) (result interface{}) {
 		cast, ok := subject.(string)
 		if ok {
 			result = path.Base(cast)
@@ -75,7 +74,6 @@ func ExampleDirectory_Enumerate() {
 	for entry := range filesOfInterest {
 		fmt.Println(entry.(string))
 	}
-	close(done)
 
 	// Output: filesystem_test.go
 }
@@ -146,7 +144,7 @@ func TestDirectory_Enumerate(t *testing.T) {
 	for _, tc := range testCases {
 		subject.Options = tc.options
 		t.Run(fmt.Sprintf("%d", uint(tc.options)), func(t *testing.T) {
-			for entry := range subject.Enumerate(nil) {
+			for entry := range subject.Enumerate(context.Background()) {
 				cast := entry.(string)
 				if _, ok := tc.expected[cast]; !ok {
 					t.Logf("unexpected result: %q", cast)
