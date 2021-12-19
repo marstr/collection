@@ -3,45 +3,45 @@ package collection
 import "testing"
 
 func TestLinkedList_findLast_empty(t *testing.T) {
-	if result := findLast(nil); result != nil {
+	if result := findLast[int](nil); result != nil {
 		t.Logf("got: %v\nwant: %v", result, nil)
 	}
 }
 
 func TestLinkedList_merge(t *testing.T) {
 	testCases := []struct {
-		Left     *LinkedList
-		Right    *LinkedList
+		Left     *LinkedList[int]
+		Right    *LinkedList[int]
 		Expected []int
-		Comp     Comparator
+		Comp     Comparator[int]
 	}{
 		{
-			NewLinkedList(1, 3, 5),
-			NewLinkedList(2, 4),
+			NewLinkedList[int](1, 3, 5),
+			NewLinkedList[int](2, 4),
 			[]int{1, 2, 3, 4, 5},
 			UncheckedComparatori,
 		},
 		{
-			NewLinkedList(1, 2, 3),
-			NewLinkedList(),
+			NewLinkedList[int](1, 2, 3),
+			NewLinkedList[int](),
 			[]int{1, 2, 3},
 			UncheckedComparatori,
 		},
 		{
-			NewLinkedList(),
-			NewLinkedList(1, 2, 3),
+			NewLinkedList[int](),
+			NewLinkedList[int](1, 2, 3),
 			[]int{1, 2, 3},
 			UncheckedComparatori,
 		},
 		{
-			NewLinkedList(),
-			NewLinkedList(),
+			NewLinkedList[int](),
+			NewLinkedList[int](),
 			[]int{},
 			UncheckedComparatori,
 		},
 		{
-			NewLinkedList(1),
-			NewLinkedList(1),
+			NewLinkedList[int](1),
+			NewLinkedList[int](1),
 			[]int{1, 1},
 			UncheckedComparatori,
 		},
@@ -53,12 +53,12 @@ func TestLinkedList_merge(t *testing.T) {
 		},
 		{
 			NewLinkedList(3),
-			NewLinkedList(),
+			NewLinkedList[int](),
 			[]int{3},
 			UncheckedComparatori,
 		},
 		{
-			NewLinkedList(),
+			NewLinkedList[int](),
 			NewLinkedList(10),
 			[]int{10},
 			UncheckedComparatori,
@@ -75,7 +75,7 @@ func TestLinkedList_merge(t *testing.T) {
 			i := 0
 			for cursor := result; cursor != nil; cursor, i = cursor.next, i+1 {
 				if cursor.payload != tc.Expected[i] {
-					t.Logf("got: %d want: %d", cursor.payload.(int), tc.Expected[i])
+					t.Logf("got: %d want: %d", cursor.payload, tc.Expected[i])
 					t.Fail()
 				}
 			}
@@ -88,57 +88,8 @@ func TestLinkedList_merge(t *testing.T) {
 	}
 }
 
-func TestLinkedList_mergeSort_repair(t *testing.T) {
-	testCases := []*LinkedList{
-		NewLinkedList(1, 2, "str1", 4, 5, 6),
-		NewLinkedList(1, 2, 3, "str1", 5, 6),
-		NewLinkedList(1, 'a', 3, 4, 5, 6),
-		NewLinkedList(1, 2, 3, 4, 5, uint(8)),
-		NewLinkedList("alpha", 0),
-		NewLinkedList(0, "kappa"),
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.String(), func(t *testing.T) {
-			originalLength := tc.Length()
-			originalElements := tc.Enumerate(nil).ToSlice()
-			originalContents := tc.String()
-
-			if err := tc.Sorti(); err != ErrUnexpectedType {
-				t.Log("`Sorti() should have thrown ErrUnexpectedType")
-				t.Fail()
-			}
-
-			t.Logf("Contents:\n\tOriginal:   \t%s\n\tPost Merge: \t%s", originalContents, tc.String())
-
-			if newLength := tc.Length(); newLength != originalLength {
-				t.Logf("Length changed. got: %d want: %d", newLength, originalLength)
-				t.Fail()
-			}
-
-			remaining := tc.Enumerate(nil).ToSlice()
-
-			for _, desired := range originalElements {
-				found := false
-				for i, got := range remaining {
-					if got == desired {
-						remaining = append(remaining[:i], remaining[i+1:]...)
-						found = true
-						break
-					}
-				}
-
-				if !found {
-					t.Logf("couldn't find element: %v", desired)
-					t.Fail()
-				}
-			}
-		})
-	}
-}
-
-func UncheckedComparatori(a, b interface{}) (int, error) {
-	return a.(int) - b.(int), nil
+func UncheckedComparatori(a, b int) (int, error) {
+	return a - b, nil
 }
 
 func TestLinkedList_RemoveBack_single(t *testing.T) {
@@ -146,53 +97,6 @@ func TestLinkedList_RemoveBack_single(t *testing.T) {
 	subject.RemoveBack()
 	if subject.Length() != 0 {
 		t.Fail()
-	}
-}
-
-func TestLinkedList_Sorti(t *testing.T) {
-	testCases := []struct {
-		*LinkedList
-		Expected []int
-	}{
-		{
-			NewLinkedList(),
-			[]int{},
-		},
-		{
-			NewLinkedList(1, 2, 3, 4),
-			[]int{1, 2, 3, 4},
-		},
-		{
-			NewLinkedList(0, -1, 2, 8, 9),
-			[]int{-1, 0, 2, 8, 9},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.String(), func(t *testing.T) {
-			if err := tc.Sorti(); err != nil {
-				t.Error(err)
-			}
-
-			sorted := tc.ToSlice()
-
-			if countSorted, countExpected := len(sorted), len(tc.Expected); countSorted != countExpected {
-				t.Logf("got: %d want: %d", countSorted, countExpected)
-				t.FailNow()
-			}
-
-			for i, entry := range sorted {
-				cast, ok := entry.(int)
-				if !ok {
-					t.Errorf("Element was not an int: %v", entry)
-				}
-
-				if cast != tc.Expected[i] {
-					t.Logf("got: %d want: %d at: %d", cast, tc.Expected[i], i)
-					t.Fail()
-				}
-			}
-		})
 	}
 }
 
@@ -244,7 +148,7 @@ func TestLinkedList_split_Odd(t *testing.T) {
 }
 
 func TestLinkedList_split_Empty(t *testing.T) {
-	subject := NewLinkedList()
+	subject := NewLinkedList[*int]()
 
 	left, right := split(subject.first)
 
@@ -330,7 +234,7 @@ func TestLinkedList_Swap_OutOfBounds(t *testing.T) {
 func TestLinkedList_Get_OutsideBounds(t *testing.T) {
 	subject := NewLinkedList(2, 3, 5, 8, 13, 21)
 	result, ok := subject.Get(10)
-	if !(result == nil && ok == false) {
+	if !(result == 0 && ok == false) {
 		t.Logf("got: %v %v\nwant: %v %v", result, ok, nil, false)
 		t.Fail()
 	}
@@ -348,8 +252,8 @@ func TestLinkedList_removeNode(t *testing.T) {
 		}
 
 		if first, ok := subject.Get(0); ok {
-			if first.(int) != 2 {
-				t.Logf("got %d, want %d", first.(int), 2)
+			if first != 2 {
+				t.Logf("got %d, want %d", first, 2)
 				t.Fail()
 			}
 		} else {
@@ -358,8 +262,8 @@ func TestLinkedList_removeNode(t *testing.T) {
 		}
 
 		if second, ok := subject.Get(1); ok {
-			if second.(int) != 3 {
-				t.Logf("got %d, want %d", second.(int), 3)
+			if second != 3 {
+				t.Logf("got %d, want %d", second, 3)
 				t.Fail()
 			}
 		} else {
@@ -379,8 +283,8 @@ func TestLinkedList_removeNode(t *testing.T) {
 		}
 
 		if first, ok := subject.Get(0); ok {
-			if first.(int) != 1 {
-				t.Logf("got %d, want %d", first.(int), 1)
+			if first != 1 {
+				t.Logf("got %d, want %d", first, 1)
 				t.Fail()
 			}
 		} else {
@@ -389,8 +293,8 @@ func TestLinkedList_removeNode(t *testing.T) {
 		}
 
 		if second, ok := subject.Get(1); ok {
-			if second.(int) != 2 {
-				t.Logf("got %d, want %d", second.(int), 2)
+			if second != 2 {
+				t.Logf("got %d, want %d", second, 2)
 				t.Fail()
 			}
 		} else {
@@ -410,8 +314,8 @@ func TestLinkedList_removeNode(t *testing.T) {
 		}
 
 		if first, ok := subject.Get(0); ok {
-			if first.(int) != 1 {
-				t.Logf("got %d, want %d", first.(int), 1)
+			if first != 1 {
+				t.Logf("got %d, want %d", first, 1)
 				t.Fail()
 			}
 		} else {
@@ -420,8 +324,8 @@ func TestLinkedList_removeNode(t *testing.T) {
 		}
 
 		if second, ok := subject.Get(1); ok {
-			if second.(int) != 3 {
-				t.Logf("got %d, want %d", second.(int), 3)
+			if second != 3 {
+				t.Logf("got %d, want %d", second, 3)
 				t.Fail()
 			}
 		} else {

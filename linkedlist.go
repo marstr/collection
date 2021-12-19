@@ -4,29 +4,28 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"strings"
 	"sync"
 )
 
 // LinkedList encapsulates a list where each entry is aware of only the next entry in the list.
-type LinkedList struct {
-	first  *llNode
-	last   *llNode
+type LinkedList[T any] struct {
+	first  *llNode[T]
+	last   *llNode[T]
 	length uint
 	key    sync.RWMutex
 }
 
-type llNode struct {
-	payload interface{}
-	next    *llNode
-	prev    *llNode
+type llNode[T any] struct {
+	payload T
+	next    *llNode[T]
+	prev    *llNode[T]
 }
 
 // Comparator is a function which evaluates two values to determine their relation to one another.
 // - Zero is returned when `a` and `b` are equal.
 // - Positive numbers are returned when `a` is greater than `b`.
 // - Negative numbers are returned when `a` is less than `b`.
-type Comparator func(a, b interface{}) (int, error)
+type Comparator[T any] func(a, b T) (int, error)
 
 // A collection of errors that may be thrown by functions in this file.
 var (
@@ -34,8 +33,8 @@ var (
 )
 
 // NewLinkedList instantiates a new LinkedList with the entries provided.
-func NewLinkedList(entries ...interface{}) *LinkedList {
-	list := &LinkedList{}
+func NewLinkedList[T any](entries ...T) *LinkedList[T] {
+	list := &LinkedList[T]{}
 
 	for _, entry := range entries {
 		list.AddBack(entry)
@@ -45,18 +44,18 @@ func NewLinkedList(entries ...interface{}) *LinkedList {
 }
 
 // AddBack creates an entry in the LinkedList that is logically at the back of the list.
-func (list *LinkedList) AddBack(entry interface{}) {
+func (list *LinkedList[T]) AddBack(entry T) {
 	list.key.Lock()
 	defer list.key.Unlock()
 
-	toAppend := &llNode{
+	toAppend := &llNode[T]{
 		payload: entry,
 	}
 
 	list.addNodeBack(toAppend)
 }
 
-func (list *LinkedList) addNodeBack(node *llNode) {
+func (list *LinkedList[T]) addNodeBack(node *llNode[T]) {
 
 	list.length++
 
@@ -73,8 +72,8 @@ func (list *LinkedList) addNodeBack(node *llNode) {
 }
 
 // AddFront creates an entry in the LinkedList that is logically at the front of the list.
-func (list *LinkedList) AddFront(entry interface{}) {
-	toAppend := &llNode{
+func (list *LinkedList[T]) AddFront(entry T) {
+	toAppend := &llNode[T]{
 		payload: entry,
 	}
 
@@ -84,7 +83,7 @@ func (list *LinkedList) AddFront(entry interface{}) {
 	list.addNodeFront(toAppend)
 }
 
-func (list *LinkedList) addNodeFront(node *llNode) {
+func (list *LinkedList[T]) addNodeFront(node *llNode[T]) {
 	list.length++
 
 	node.next = list.first
@@ -98,8 +97,8 @@ func (list *LinkedList) addNodeFront(node *llNode) {
 }
 
 // Enumerate creates a new instance of Enumerable which can be executed on.
-func (list *LinkedList) Enumerate(cancel <-chan struct{}) Enumerator {
-	retval := make(chan interface{})
+func (list *LinkedList[T]) Enumerate(cancel <-chan struct{}) Enumerator[T] {
+	retval := make(chan T)
 
 	go func() {
 		list.key.RLock()
@@ -123,18 +122,18 @@ func (list *LinkedList) Enumerate(cancel <-chan struct{}) Enumerator {
 
 // Get finds the value from the LinkedList.
 // pos is expressed as a zero-based index begining from the 'front' of the list.
-func (list *LinkedList) Get(pos uint) (interface{}, bool) {
+func (list *LinkedList[T]) Get(pos uint) (T, bool) {
 	list.key.RLock()
 	defer list.key.RUnlock()
 	node, ok := get(list.first, pos)
 	if ok {
 		return node.payload, true
 	}
-	return nil, false
+	return *new(T), false
 }
 
 // IsEmpty tests the list to determine if it is populate or not.
-func (list *LinkedList) IsEmpty() bool {
+func (list *LinkedList[T]) IsEmpty() bool {
 	list.key.RLock()
 	defer list.key.RUnlock()
 
@@ -142,7 +141,7 @@ func (list *LinkedList) IsEmpty() bool {
 }
 
 // Length returns the number of elements present in the LinkedList.
-func (list *LinkedList) Length() uint {
+func (list *LinkedList[T]) Length() uint {
 	list.key.RLock()
 	defer list.key.RUnlock()
 
@@ -150,34 +149,34 @@ func (list *LinkedList) Length() uint {
 }
 
 // PeekBack returns the entry logicall stored at the back of the list without removing it.
-func (list *LinkedList) PeekBack() (interface{}, bool) {
+func (list *LinkedList[T]) PeekBack() (T, bool) {
 	list.key.RLock()
 	defer list.key.RUnlock()
 
 	if list.last == nil {
-		return nil, false
+		return *new(T), false
 	}
 	return list.last.payload, true
 }
 
 // PeekFront returns the entry logically stored at the front of this list without removing it.
-func (list *LinkedList) PeekFront() (interface{}, bool) {
+func (list *LinkedList[T]) PeekFront() (T, bool) {
 	list.key.RLock()
 	defer list.key.RUnlock()
 
 	if list.first == nil {
-		return nil, false
+		return *new(T), false
 	}
 	return list.first.payload, true
 }
 
 // RemoveFront returns the entry logically stored at the front of this list and removes it.
-func (list *LinkedList) RemoveFront() (interface{}, bool) {
+func (list *LinkedList[T]) RemoveFront() (T, bool) {
 	list.key.Lock()
 	defer list.key.Unlock()
 
 	if list.first == nil {
-		return nil, false
+		return *new(T), false
 	}
 
 	retval := list.first.payload
@@ -193,12 +192,12 @@ func (list *LinkedList) RemoveFront() (interface{}, bool) {
 }
 
 // RemoveBack returns the entry logically stored at the back of this list and removes it.
-func (list *LinkedList) RemoveBack() (interface{}, bool) {
+func (list *LinkedList[T]) RemoveBack() (T, bool) {
 	list.key.Lock()
 	defer list.key.Unlock()
 
 	if list.last == nil {
-		return nil, false
+		return *new(T), false
 	}
 
 	retval := list.last.payload
@@ -214,7 +213,7 @@ func (list *LinkedList) RemoveBack() (interface{}, bool) {
 }
 
 // removeNode
-func (list *LinkedList) removeNode(target *llNode) {
+func (list *LinkedList[T]) removeNode(target *llNode[T]) {
 	if target == nil {
 		return
 	}
@@ -246,7 +245,7 @@ func (list *LinkedList) removeNode(target *llNode) {
 
 // Sort rearranges the positions of the entries in this list so that they are
 // ascending.
-func (list *LinkedList) Sort(comparator Comparator) error {
+func (list *LinkedList[T]) Sort(comparator Comparator[T]) error {
 	list.key.Lock()
 	defer list.key.Unlock()
 	var err error
@@ -258,56 +257,8 @@ func (list *LinkedList) Sort(comparator Comparator) error {
 	return err
 }
 
-// Sorta rearranges the position of string entries in this list so that they
-// are ascending.
-func (list *LinkedList) Sorta() error {
-	list.key.Lock()
-	defer list.key.Unlock()
-
-	var err error
-	list.first, err = mergeSort(list.first, func(a, b interface{}) (int, error) {
-		castA, ok := a.(string)
-		if !ok {
-			return 0, ErrUnexpectedType
-		}
-		castB, ok := b.(string)
-		if !ok {
-			return 0, ErrUnexpectedType
-		}
-
-		return strings.Compare(castA, castB), nil
-	})
-	list.last = findLast(list.first)
-	return err
-}
-
-// Sorti rearranges the position of integer entries in this list so that they
-// are ascending.
-func (list *LinkedList) Sorti() (err error) {
-	list.key.Lock()
-	defer list.key.Unlock()
-
-	list.first, err = mergeSort(list.first, func(a, b interface{}) (int, error) {
-		castA, ok := a.(int)
-		if !ok {
-			return 0, ErrUnexpectedType
-		}
-		castB, ok := b.(int)
-		if !ok {
-			return 0, ErrUnexpectedType
-		}
-
-		return castA - castB, nil
-	})
-	if err != nil {
-		return
-	}
-	list.last = findLast(list.first)
-	return
-}
-
 // String prints upto the first fifteen elements of the list in string format.
-func (list *LinkedList) String() string {
+func (list *LinkedList[T]) String() string {
 	list.key.RLock()
 	defer list.key.RUnlock()
 
@@ -328,11 +279,11 @@ func (list *LinkedList) String() string {
 
 // Swap switches the positions in which two values are stored in this list.
 // x and y represent the indexes of the items that should be swapped.
-func (list *LinkedList) Swap(x, y uint) error {
+func (list *LinkedList[T]) Swap(x, y uint) error {
 	list.key.Lock()
 	defer list.key.Unlock()
 
-	var xNode, yNode *llNode
+	var xNode, yNode *llNode[T]
 	if temp, ok := get(list.first, x); ok {
 		xNode = temp
 	} else {
@@ -350,16 +301,12 @@ func (list *LinkedList) Swap(x, y uint) error {
 	return nil
 }
 
-func (list *LinkedList) moveToFront(node *llNode) {
-
-}
-
 // ToSlice converts the contents of the LinkedList into a slice.
-func (list *LinkedList) ToSlice() []interface{} {
+func (list *LinkedList[T]) ToSlice() []T {
 	return list.Enumerate(nil).ToSlice()
 }
 
-func findLast(head *llNode) *llNode {
+func findLast[T any](head *llNode[T]) *llNode[T] {
 	if head == nil {
 		return nil
 	}
@@ -370,7 +317,7 @@ func findLast(head *llNode) *llNode {
 	return current
 }
 
-func get(head *llNode, pos uint) (*llNode, bool) {
+func get[T any](head *llNode[T], pos uint) (*llNode[T], bool) {
 	for i := uint(0); i < pos; i++ {
 		if head == nil {
 			return nil, false
@@ -382,13 +329,13 @@ func get(head *llNode, pos uint) (*llNode, bool) {
 
 // merge takes two sorted lists and merges them into one sorted list.
 // Behavior is undefined when you pass a non-sorted list as `left` or `right`
-func merge(left, right *llNode, comparator Comparator) (first *llNode, err error) {
+func merge[T any](left, right *llNode[T], comparator Comparator[T]) (first *llNode[T], err error) {
 	curLeft := left
 	curRight := right
 
-	var last *llNode
+	var last *llNode[T]
 
-	appendResults := func(updated *llNode) {
+	appendResults := func(updated *llNode[T]) {
 		if last == nil {
 			last = updated
 		} else {
@@ -422,14 +369,14 @@ func merge(left, right *llNode, comparator Comparator) (first *llNode, err error
 	return
 }
 
-func mergeSort(head *llNode, comparator Comparator) (*llNode, error) {
+func mergeSort[T any](head *llNode[T], comparator Comparator[T]) (*llNode[T], error) {
 	if head == nil {
 		return nil, nil
 	}
 
 	left, right := split(head)
 
-	repair := func(left, right *llNode) *llNode {
+	repair := func(left, right *llNode[T]) *llNode[T] {
 		lastLeft := findLast(left)
 		lastLeft.next = right
 		return left
@@ -453,7 +400,7 @@ func mergeSort(head *llNode, comparator Comparator) (*llNode, error) {
 }
 
 // split breaks a list in half.
-func split(head *llNode) (left, right *llNode) {
+func split[T any](head *llNode[T]) (left, right *llNode[T]) {
 	left = head
 	if head == nil || head.next == nil {
 		return

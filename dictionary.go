@@ -130,17 +130,17 @@ func (dict Dictionary) Size() int64 {
 }
 
 // Enumerate lists each word in the Dictionary alphabetically.
-func (dict Dictionary) Enumerate(cancel <-chan struct{}) Enumerator {
+func (dict Dictionary) Enumerate(cancel <-chan struct{}) Enumerator[string] {
 	if dict.root == nil {
-		return Empty.Enumerate(cancel)
+		return Empty[string]().Enumerate(cancel)
 	}
 	return dict.root.Enumerate(cancel)
 }
 
-func (node trieNode) Enumerate(cancel <-chan struct{}) Enumerator {
+func (node trieNode) Enumerate(cancel <-chan struct{}) Enumerator[string] {
 	var enumerateHelper func(trieNode, string)
 
-	results := make(chan interface{})
+	results := make(chan string)
 
 	enumerateHelper = func(subject trieNode, prefix string) {
 		if subject.IsWord {

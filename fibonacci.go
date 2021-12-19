@@ -3,14 +3,14 @@ package collection
 type fibonacciGenerator struct{}
 
 // Fibonacci is an Enumerable which will dynamically generate the fibonacci sequence.
-var Fibonacci Enumerable = fibonacciGenerator{}
+var Fibonacci Enumerable[uint] = fibonacciGenerator{}
 
-func (gen fibonacciGenerator) Enumerate(cancel <-chan struct{}) Enumerator {
-	retval := make(chan interface{})
+func (gen fibonacciGenerator) Enumerate(cancel <-chan struct{}) Enumerator[uint] {
+	retval := make(chan uint)
 
 	go func() {
 		defer close(retval)
-		a, b := 0, 1
+		var a, b uint = 0, 1
 
 		for {
 			select {

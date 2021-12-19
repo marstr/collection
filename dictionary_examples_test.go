@@ -31,12 +31,12 @@ func ExampleDictionary_Clear() {
 	subject.Add("world")
 
 	fmt.Println(subject.Size())
-	fmt.Println(collection.CountAll(subject))
+	fmt.Println(collection.CountAll[string](subject))
 
 	subject.Clear()
 
 	fmt.Println(subject.Size())
-	fmt.Println(collection.Any(subject))
+	fmt.Println(collection.Any[string](subject))
 
 	// Output:
 	// 2
@@ -50,8 +50,8 @@ func ExampleDictionary_Enumerate() {
 	subject.Add("world")
 	subject.Add("hello")
 
-	upperCase := collection.Select(subject, func(x interface{}) interface{} {
-		return strings.ToUpper(x.(string))
+	upperCase := collection.Select[string](subject, func(x string) string {
+		return strings.ToUpper(x)
 	})
 
 	for word := range subject.Enumerate(nil) {
@@ -76,13 +76,13 @@ func ExampleDictionary_Remove() {
 	subject.Add(world)
 
 	fmt.Println(subject.Size())
-	fmt.Println(collection.CountAll(subject))
+	fmt.Println(collection.CountAll[string](subject))
 
 	subject.Remove(world)
 
 	fmt.Println(subject.Size())
-	fmt.Println(collection.CountAll(subject))
-	fmt.Println(collection.Any(subject))
+	fmt.Println(collection.CountAll[string](subject))
+	fmt.Println(collection.Any[string](subject))
 
 	// Output:
 	// 2

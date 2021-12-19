@@ -27,10 +27,11 @@ func ExampleLinkedList_AddBack() {
 
 func ExampleLinkedList_Enumerate() {
 	subject := collection.NewLinkedList(2, 3, 5, 8)
-	results := subject.Enumerate(nil).Select(func(a interface{}) interface{} {
-		return -1 * a.(int)
+	results := collection.Select[int](subject, func(a int) int {
+		return -1 * a
 	})
-	for entry := range results {
+
+	for entry := range results.Enumerate(nil) {
 		fmt.Println(entry)
 	}
 	// Output:
@@ -63,50 +64,21 @@ func ExampleLinkedList_Sort() {
 	// Sorti sorts into ascending order, this example demonstrates sorting
 	// into descending order.
 	subject := collection.NewLinkedList(2, 4, 3, 5, 7, 7)
-	subject.Sort(func(a, b interface{}) (int, error) {
-		castA, ok := a.(int)
-		if !ok {
-			return 0, collection.ErrUnexpectedType
-		}
-		castB, ok := b.(int)
-		if !ok {
-			return 0, collection.ErrUnexpectedType
-		}
-
-		return castB - castA, nil
+	subject.Sort(func(a, b int) (int, error) {
+		return b - a, nil
 	})
 	fmt.Println(subject)
 	// Output: [7 7 5 4 3 2]
 }
 
-func ExampleLinkedList_Sorta() {
-	subject := collection.NewLinkedList("charlie", "alfa", "bravo", "delta")
-	subject.Sorta()
-	for _, entry := range subject.ToSlice() {
-		fmt.Println(entry.(string))
-	}
-	// Output:
-	// alfa
-	// bravo
-	// charlie
-	// delta
-}
-
-func ExampleLinkedList_Sorti() {
-	subject := collection.NewLinkedList(7, 3, 2, 2, 3, 6)
-	subject.Sorti()
-	fmt.Println(subject)
-	// Output: [2 2 3 3 6 7]
-}
-
 func ExampleLinkedList_String() {
-	subject1 := collection.NewLinkedList()
+	subject1 := collection.NewLinkedList[int]()
 	for i := 0; i < 20; i++ {
 		subject1.AddBack(i)
 	}
 	fmt.Println(subject1)
 
-	subject2 := collection.NewLinkedList(1, 2, 3)
+	subject2 := collection.NewLinkedList[int](1, 2, 3)
 	fmt.Println(subject2)
 	// Output:
 	// [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 ...]

@@ -8,20 +8,20 @@ import (
 
 // List is a dynamically sized list akin to List in the .NET world,
 // ArrayList in the Java world, or vector in the C++ world.
-type List struct {
-	underlyer []interface{}
+type List[T any] struct {
+	underlyer []T
 	key       sync.RWMutex
 }
 
 // NewList creates a new list which contains the elements provided.
-func NewList(entries ...interface{}) *List {
-	return &List{
+func NewList[T any](entries ...T) *List[T] {
+	return &List[T]{
 		underlyer: entries,
 	}
 }
 
 // Add appends an entry to the logical end of the List.
-func (l *List) Add(entries ...interface{}) {
+func (l *List[T]) Add(entries ...T) {
 	l.key.Lock()
 	defer l.key.Unlock()
 	l.underlyer = append(l.underlyer, entries...)
@@ -30,7 +30,7 @@ func (l *List) Add(entries ...interface{}) {
 // AddAt injects values beginning at `pos`. If multiple values
 // are provided in `entries` they are placed in the same order
 // they are provided.
-func (l *List) AddAt(pos uint, entries ...interface{}) {
+func (l *List[T]) AddAt(pos uint, entries ...T) {
 	l.key.Lock()
 	defer l.key.Unlock()
 
@@ -38,8 +38,8 @@ func (l *List) AddAt(pos uint, entries ...interface{}) {
 }
 
 // Enumerate lists each element present in the collection
-func (l *List) Enumerate(cancel <-chan struct{}) Enumerator {
-	retval := make(chan interface{})
+func (l *List[T]) Enumerate(cancel <-chan struct{}) Enumerator[T] {
+	retval := make(chan T)
 
 	go func() {
 		l.key.RLock()
@@ -62,37 +62,37 @@ func (l *List) Enumerate(cancel <-chan struct{}) Enumerator {
 // Get retreives the value stored in a particular position of the list.
 // If no item exists at the given position, the second parameter will be
 // returned as false.
-func (l *List) Get(pos uint) (interface{}, bool) {
+func (l *List[T]) Get(pos uint) (T, bool) {
 	l.key.RLock()
 	defer l.key.RUnlock()
 
 	if pos > uint(len(l.underlyer)) {
-		return nil, false
+		return *new(T), false
 	}
 	return l.underlyer[pos], true
 }
 
 // IsEmpty tests to see if this List has any elements present.
-func (l *List) IsEmpty() bool {
+func (l *List[T]) IsEmpty() bool {
 	l.key.RLock()
 	defer l.key.RUnlock()
 	return 0 == len(l.underlyer)
 }
 
 // Length returns the number of elements in the List.
-func (l *List) Length() uint {
+func (l *List[T]) Length() uint {
 	l.key.RLock()
 	defer l.key.RUnlock()
 	return uint(len(l.underlyer))
 }
 
 // Remove retreives a value from this List and shifts all other values.
-func (l *List) Remove(pos uint) (interface{}, bool) {
+func (l *List[T]) Remove(pos uint) (T, bool) {
 	l.key.Lock()
 	defer l.key.Unlock()
 
 	if pos > uint(len(l.underlyer)) {
-		return nil, false
+		return *new(T), false
 	}
 	retval := l.underlyer[pos]
 	l.underlyer = append(l.underlyer[:pos], l.underlyer[pos+1:]...)
@@ -100,7 +100,7 @@ func (l *List) Remove(pos uint) (interface{}, bool) {
 }
 
 // Set updates the value stored at a given position in the List.
-func (l *List) Set(pos uint, val interface{}) bool {
+func (l *List[T]) Set(pos uint, val T) bool {
 	l.key.Lock()
 	defer l.key.Unlock()
 	var retval bool
@@ -115,7 +115,7 @@ func (l *List) Set(pos uint, val interface{}) bool {
 }
 
 // String generates a textual representation of the List for the sake of debugging.
-func (l *List) String() string {
+func (l *List[T]) String() string {
 	l.key.RLock()
 	defer l.key.RUnlock()
 
@@ -134,13 +134,13 @@ func (l *List) String() string {
 }
 
 // Swap switches the values that are stored at positions `x` and `y`
-func (l *List) Swap(x, y uint) bool {
+func (l *List[T]) Swap(x, y uint) bool {
 	l.key.Lock()
 	defer l.key.Unlock()
 	return l.swap(x, y)
 }
 
-func (l *List) swap(x, y uint) bool {
+func (l *List[T]) swap(x, y uint) bool {
 	count := uint(len(l.underlyer))
 	if x < count && y < count {
 		temp := l.underlyer[x]

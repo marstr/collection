@@ -6,7 +6,7 @@ import (
 )
 
 func ExampleQueue_Add() {
-	subject := &Queue{}
+	subject := &Queue[int]{}
 	subject.Add(1)
 	subject.Add(2)
 	res, _ := subject.Peek()
@@ -15,7 +15,7 @@ func ExampleQueue_Add() {
 }
 
 func ExampleNewQueue() {
-	empty := NewQueue()
+	empty := NewQueue[int]()
 	fmt.Println(empty.Length())
 
 	populated := NewQueue(1, 2, 3, 5, 8, 13)
@@ -26,7 +26,7 @@ func ExampleNewQueue() {
 }
 
 func ExampleQueue_IsEmpty() {
-	empty := NewQueue()
+	empty := NewQueue[int]()
 	fmt.Println(empty.IsEmpty())
 
 	populated := NewQueue(1, 2, 3, 5, 8, 13)
@@ -52,7 +52,7 @@ func ExampleQueue_Next() {
 }
 
 func TestQueue_Length(t *testing.T) {
-	empty := NewQueue()
+	empty := NewQueue[int]()
 	if count := empty.Length(); count != 0 {
 		t.Logf("got: %d\nwant: %d", count, 0)
 		t.Fail()
@@ -74,7 +74,7 @@ func TestQueue_Length(t *testing.T) {
 }
 
 func TestQueue_Length_NonConstructed(t *testing.T) {
-	subject := &Queue{}
+	subject := &Queue[int]{}
 	if got := subject.Length(); got != 0 {
 		t.Logf("got: %d\nwant: %d", got, 0)
 		t.Fail()
@@ -82,12 +82,13 @@ func TestQueue_Length_NonConstructed(t *testing.T) {
 }
 
 func TestQueue_Next_NonConstructed(t *testing.T) {
-	subject := &Queue{}
+	const expected = 0
+	subject := &Queue[int]{}
 	if got, ok := subject.Next(); ok {
 		t.Logf("Next should not have been ok")
 		t.Fail()
-	} else if got != nil {
-		t.Logf("got: %v\nwant: %v", got, nil)
+	} else if got != expected {
+		t.Logf("got: %v\nwant: %v", got, expected)
 		t.Fail()
 	}
 }
@@ -107,12 +108,13 @@ func TestQueue_Peek_DoesntRemove(t *testing.T) {
 }
 
 func TestQueue_Peek_NonConstructed(t *testing.T) {
-	subject := &Queue{}
+	const expected = 0
+	subject := &Queue[int]{}
 	if got, ok := subject.Peek(); ok {
 		t.Logf("Peek should not have been ok")
 		t.Fail()
-	} else if got != nil {
-		t.Logf("got: %v\nwant: %v", got, nil)
+	} else if got != expected {
+		t.Logf("got: %v\nwant: %v", got, expected)
 		t.Fail()
 	}
 }
@@ -130,7 +132,7 @@ func TestQueue_ToSlice(t *testing.T) {
 }
 
 func TestQueue_ToSlice_Empty(t *testing.T) {
-	subject := NewQueue()
+	subject := NewQueue[int]()
 	result := subject.ToSlice()
 
 	if len(result) != 0 {
@@ -146,7 +148,7 @@ func TestQueue_ToSlice_Empty(t *testing.T) {
 }
 
 func TestQueue_ToSlice_NotConstructed(t *testing.T) {
-	subject := &Queue{}
+	subject := &Queue[int]{}
 	result := subject.ToSlice()
 
 	if len(result) != 0 {

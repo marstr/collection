@@ -40,8 +40,8 @@ func (d Directory) applyOptions(loc string, info os.FileInfo) bool {
 }
 
 // Enumerate lists the items in a `Directory`
-func (d Directory) Enumerate(cancel <-chan struct{}) Enumerator {
-	results := make(chan interface{})
+func (d Directory) Enumerate(cancel <-chan struct{}) Enumerator[string] {
+	results := make(chan string)
 
 	go func() {
 		defer close(results)
@@ -75,3 +75,4 @@ func (d Directory) Enumerate(cancel <-chan struct{}) Enumerator {
 
 	return results
 }
+

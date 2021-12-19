@@ -32,29 +32,29 @@ func TestDictionary_Enumerate(t *testing.T) {
 				t.Fail()
 			}
 
-			if subjectSize := CountAll(subject); subjectSize != expectedSize {
+			if subjectSize := CountAll[string](subject); subjectSize != expectedSize {
 				t.Logf("`CountAll` returned %d elements, expected %d", subjectSize, expectedSize)
 				t.Fail()
 			}
 
 			prev := ""
 			for result := range subject.Enumerate(nil) {
-				t.Logf(result.(string))
-				if alreadySeen, ok := expected[result.(string)]; !ok {
+				t.Logf(result)
+				if alreadySeen, ok := expected[result]; !ok {
 					t.Logf("An unadded value was returned")
 					t.Fail()
 				} else if alreadySeen {
-					t.Logf("\"%s\" was duplicated", result.(string))
+					t.Logf("\"%s\" was duplicated", result)
 					t.Fail()
 				}
 
-				if stringle(result.(string), prev) {
-					t.Logf("Results \"%s\" and \"%s\" were not alphabetized.", prev, result.(string))
+				if stringle(result, prev) {
+					t.Logf("Results \"%s\" and \"%s\" were not alphabetized.", prev, result)
 					t.Fail()
 				}
-				prev = result.(string)
+				prev = result
 
-				expected[result.(string)] = true
+				expected[result] = true
 			}
 		})
 	}

@@ -7,7 +7,7 @@ import (
 )
 
 func ExampleLRUCache() {
-	subject := collection.NewLRUCache(3)
+	subject := collection.NewLRUCache[int, string](3)
 	subject.Put(1, "one")
 	subject.Put(2, "two")
 	subject.Put(3, "three")
@@ -15,13 +15,13 @@ func ExampleLRUCache() {
 	fmt.Println(subject.Get(1))
 	fmt.Println(subject.Get(4))
 	// Output:
-	// <nil> false
+	// false
 	// four true
 }
 
 func ExampleLRUCache_Enumerate() {
 	ctx := context.Background()
-	subject := collection.NewLRUCache(3)
+	subject := collection.NewLRUCache[int, string](3)
 	subject.Put(1, "one")
 	subject.Put(2, "two")
 	subject.Put(3, "three")
@@ -39,7 +39,7 @@ func ExampleLRUCache_Enumerate() {
 
 func ExampleLRUCache_EnumerateKeys() {
 	ctx := context.Background()
-	subject := collection.NewLRUCache(3)
+	subject := collection.NewLRUCache[int, string](3)
 	subject.Put(1, "one")
 	subject.Put(2, "two")
 	subject.Put(3, "three")
