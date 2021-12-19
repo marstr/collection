@@ -3,7 +3,7 @@ package collection_test
 import (
 	"fmt"
 
-	"github.com/marstr/collection"
+	"github.com/marstr/collection/v2"
 )
 
 func ExampleLinkedList_AddFront() {

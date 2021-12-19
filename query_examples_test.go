@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/marstr/collection"
+	"github.com/marstr/collection/v2"
 )
 
 func ExampleAsEnumerable() {

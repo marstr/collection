@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/marstr/collection"
+	"github.com/marstr/collection/v2"
 )
 
 func ExampleDictionary_Add() {

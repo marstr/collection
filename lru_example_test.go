@@ -3,7 +3,7 @@ package collection_test
 import (
 	"context"
 	"fmt"
-	"github.com/marstr/collection"
+	"github.com/marstr/collection/v2"
 )
 
 func ExampleLRUCache() {
