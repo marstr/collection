@@ -55,7 +55,10 @@ func ExampleDirectory_Enumerate() {
 		Options:  DirectoryOptionsExcludeDirectories,
 	}
 
-	filesOfInterest := traverser.Enumerate(context.Background()).Select(func(subject interface{}) (result interface{}) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	filesOfInterest := traverser.Enumerate(ctx).Select(func(subject interface{}) (result interface{}) {
 		cast, ok := subject.(string)
 		if ok {
 			result = path.Base(cast)
