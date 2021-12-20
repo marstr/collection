@@ -1,6 +1,9 @@
 package collection
 
-import "sync"
+import (
+	"context"
+	"sync"
+)
 
 // LRUCache hosts up to a given number of items. When more are presented, the least recently used item
 // is evicted from the cache.
@@ -85,10 +88,10 @@ func (lru *LRUCache[K, V]) Remove(key K) bool {
 }
 
 // Enumerate lists each value in the cache.
-func (lru *LRUCache[K, V]) Enumerate(cancel <-chan struct{}) Enumerator[V] {
+func (lru *LRUCache[K, V]) Enumerate(ctx context.Context) Enumerator[V] {
 	retval := make(chan V)
 
-	nested := lru.touched.Enumerate(cancel)
+	nested := lru.touched.Enumerate(ctx)
 
 	go func() {
 		lru.key.RLock()
@@ -99,7 +102,7 @@ func (lru *LRUCache[K, V]) Enumerate(cancel <-chan struct{}) Enumerator[V] {
 			select {
 			case retval <- entry.Value:
 				break
-			case <-cancel:
+			case <-ctx.Done():
 				return
 			}
 		}
@@ -109,10 +112,10 @@ func (lru *LRUCache[K, V]) Enumerate(cancel <-chan struct{}) Enumerator[V] {
 }
 
 // EnumerateKeys lists each key in the cache.
-func (lru *LRUCache[K, V]) EnumerateKeys(cancel <-chan struct{}) Enumerator[K] {
+func (lru *LRUCache[K, V]) EnumerateKeys(ctx context.Context) Enumerator[K] {
 	retval := make(chan K)
 
-	nested := lru.touched.Enumerate(cancel)
+	nested := lru.touched.Enumerate(ctx)
 
 	go func() {
 		lru.key.RLock()
@@ -123,7 +126,7 @@ func (lru *LRUCache[K, V]) EnumerateKeys(cancel <-chan struct{}) Enumerator[K] {
 			select {
 			case retval <- entry.Key:
 				break
-			case <-cancel:
+			case <-ctx.Done():
 				return
 			}
 		}

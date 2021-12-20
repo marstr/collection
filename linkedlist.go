@@ -2,6 +2,7 @@ package collection
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -97,7 +98,7 @@ func (list *LinkedList[T]) addNodeFront(node *llNode[T]) {
 }
 
 // Enumerate creates a new instance of Enumerable which can be executed on.
-func (list *LinkedList[T]) Enumerate(cancel <-chan struct{}) Enumerator[T] {
+func (list *LinkedList[T]) Enumerate(ctx context.Context) Enumerator[T] {
 	retval := make(chan T)
 
 	go func() {
@@ -110,7 +111,7 @@ func (list *LinkedList[T]) Enumerate(cancel <-chan struct{}) Enumerator[T] {
 			select {
 			case retval <- current.payload:
 				break
-			case <-cancel:
+			case <-ctx.Done():
 				return
 			}
 			current = current.next
@@ -303,7 +304,7 @@ func (list *LinkedList[T]) Swap(x, y uint) error {
 
 // ToSlice converts the contents of the LinkedList into a slice.
 func (list *LinkedList[T]) ToSlice() []T {
-	return list.Enumerate(nil).ToSlice()
+	return list.Enumerate(context.Background()).ToSlice()
 }
 
 func findLast[T any](head *llNode[T]) *llNode[T] {

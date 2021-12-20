@@ -1,6 +1,8 @@
 package collection
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestLinkedList_findLast_empty(t *testing.T) {
 	if result := findLast[int](nil); result != nil {

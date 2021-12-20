@@ -1,6 +1,7 @@
 package collection
 
 import (
+	"context"
 	"sync"
 )
 
@@ -29,10 +30,10 @@ func (q *Queue[T]) Add(entry T) {
 }
 
 // Enumerate peeks at each element of this queue without mutating it.
-func (q *Queue[T]) Enumerate(cancel <-chan struct{}) Enumerator[T] {
+func (q *Queue[T]) Enumerate(ctx context.Context) Enumerator[T] {
 	q.key.RLock()
 	defer q.key.RUnlock()
-	return q.underlyer.Enumerate(cancel)
+	return q.underlyer.Enumerate(ctx)
 }
 
 // IsEmpty tests the Queue to determine if it is populate or not.

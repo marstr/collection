@@ -1,5 +1,5 @@
 # collection
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/marstr/collection)](https://pkg.go.dev/github.com/marstr/collection) [![Build and Test](https://github.com/marstr/collection/workflows/Build%20and%20Test/badge.svg)](https://github.com/marstr/collection/actions?query=workflow%3A"Build+and+Test")
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/marstr/collection/v2)](https://pkg.go.dev/github.com/marstr/collection/v2) [![Build and Test](https://github.com/marstr/collection/workflows/Build%20and%20Test/badge.svg)](https://github.com/marstr/collection/actions?query=workflow%3A"Build+and+Test")
 
 # Usage
 
@@ -12,7 +12,7 @@ Converting between slices and a queryable structure is as trivial as it should b
 original := []interface{}{"a", "b", "c"}
 subject := collection.AsEnumerable(original...)
 
-for entry := range subject.Enumerate(nil) {
+for entry := range subject.Enumerate(context.Background()) {
     fmt.Println(entry)
 }
 // Output:
@@ -28,7 +28,7 @@ subject := collection.AsEnumerable(1, 2, 3, 4, 5, 6)
 filtered := collection.Where(subject, func(num interface{}) bool{
     return num.(int) > 3
 })
-for entry := range filtered.Enumerate(nil) {
+for entry := range filtered.Enumerate(context.Background()) {
     fmt.Println(entry)
 }
 // Output:
@@ -42,7 +42,7 @@ subject := collection.AsEnumerable(1, 2, 3, 4, 5, 6)
 updated := collection.Select(subject, func(num interface{}) interface{}{
     return num.(int) + 10
 })
-for entry := range updated.Enumerate(nil) {
+for entry := range updated.Enumerate(context.Background()) {
     fmt.Println(entry)
 }
 // Output:

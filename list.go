@@ -2,6 +2,7 @@ package collection
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"sync"
 )
@@ -38,7 +39,7 @@ func (l *List[T]) AddAt(pos uint, entries ...T) {
 }
 
 // Enumerate lists each element present in the collection
-func (l *List[T]) Enumerate(cancel <-chan struct{}) Enumerator[T] {
+func (l *List[T]) Enumerate(ctx context.Context) Enumerator[T] {
 	retval := make(chan T)
 
 	go func() {
@@ -50,7 +51,7 @@ func (l *List[T]) Enumerate(cancel <-chan struct{}) Enumerator[T] {
 			select {
 			case retval <- entry:
 				break
-			case <-cancel:
+			case <-ctx.Done():
 				return
 			}
 		}

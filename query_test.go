@@ -1,6 +1,7 @@
 package collection
 
 import (
+	"context"
 	"testing"
 	"time"
 )
@@ -28,11 +29,13 @@ func Test_Empty(t *testing.T) {
 
 func BenchmarkEnumerator_Sum(b *testing.B) {
 	var nums EnumerableSlice[int] = getInitializedSequentialArray[int]()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		slowNums := Select[int, int](nums, sleepIdentity[int])
-		for range slowNums.Enumerate(nil) {
+		for range slowNums.Enumerate(ctx) {
 			// Intentionally Left Blank
 		}
 	}

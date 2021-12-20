@@ -1,9 +1,10 @@
 package collection_test
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/marstr/collection"
+	"github.com/marstr/collection/v2"
 )
 
 func ExampleLinkedList_AddFront() {
@@ -31,7 +32,7 @@ func ExampleLinkedList_Enumerate() {
 		return -1 * a
 	})
 
-	for entry := range results.Enumerate(nil) {
+	for entry := range results.Enumerate(context.Background()) {
 		fmt.Println(entry)
 	}
 	// Output:

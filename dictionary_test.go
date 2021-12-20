@@ -1,6 +1,7 @@
 package collection
 
 import (
+	"context"
 	"strings"
 	"testing"
 )
@@ -38,7 +39,7 @@ func TestDictionary_Enumerate(t *testing.T) {
 			}
 
 			prev := ""
-			for result := range subject.Enumerate(nil) {
+			for result := range subject.Enumerate(context.Background()) {
 				t.Logf(result)
 				if alreadySeen, ok := expected[result]; !ok {
 					t.Logf("An unadded value was returned")
