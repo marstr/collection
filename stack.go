@@ -1,6 +1,7 @@
 package collection
 
 import (
+	"context"
 	"sync"
 )
 
@@ -22,11 +23,11 @@ func NewStack(entries ...interface{}) *Stack {
 }
 
 // Enumerate peeks at each element in the stack without mutating it.
-func (stack *Stack) Enumerate(cancel <-chan struct{}) Enumerator {
+func (stack *Stack) Enumerate(ctx context.Context) Enumerator {
 	stack.key.RLock()
 	defer stack.key.RUnlock()
 
-	return stack.underlyer.Enumerate(cancel)
+	return stack.underlyer.Enumerate(ctx)
 }
 
 // IsEmpty tests the Stack to determine if it is populate or not.

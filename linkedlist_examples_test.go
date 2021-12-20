@@ -1,6 +1,7 @@
 package collection_test
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/marstr/collection/v2"
@@ -27,7 +28,7 @@ func ExampleLinkedList_AddBack() {
 
 func ExampleLinkedList_Enumerate() {
 	subject := collection.NewLinkedList(2, 3, 5, 8)
-	results := subject.Enumerate(nil).Select(func(a interface{}) interface{} {
+	results := subject.Enumerate(context.Background()).Select(func(a interface{}) interface{} {
 		return -1 * a.(int)
 	})
 	for entry := range results {

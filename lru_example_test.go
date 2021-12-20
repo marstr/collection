@@ -20,14 +20,13 @@ func ExampleLRUCache() {
 }
 
 func ExampleLRUCache_Enumerate() {
-	ctx := context.Background()
 	subject := collection.NewLRUCache(3)
 	subject.Put(1, "one")
 	subject.Put(2, "two")
 	subject.Put(3, "three")
 	subject.Put(4, "four")
 
-	for key := range subject.Enumerate(ctx.Done()) {
+	for key := range subject.Enumerate(context.Background()) {
 		fmt.Println(key)
 	}
 
@@ -38,14 +37,13 @@ func ExampleLRUCache_Enumerate() {
 }
 
 func ExampleLRUCache_EnumerateKeys() {
-	ctx := context.Background()
 	subject := collection.NewLRUCache(3)
 	subject.Put(1, "one")
 	subject.Put(2, "two")
 	subject.Put(3, "three")
 	subject.Put(4, "four")
 
-	for key := range subject.EnumerateKeys(ctx.Done()) {
+	for key := range subject.EnumerateKeys(context.Background()) {
 		fmt.Println(key)
 	}
 

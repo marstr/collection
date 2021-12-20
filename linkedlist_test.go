@@ -1,6 +1,9 @@
 package collection
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
 func TestLinkedList_findLast_empty(t *testing.T) {
 	if result := findLast(nil); result != nil {
@@ -101,7 +104,7 @@ func TestLinkedList_mergeSort_repair(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.String(), func(t *testing.T) {
 			originalLength := tc.Length()
-			originalElements := tc.Enumerate(nil).ToSlice()
+			originalElements := tc.Enumerate(context.Background()).ToSlice()
 			originalContents := tc.String()
 
 			if err := tc.Sorti(); err != ErrUnexpectedType {
@@ -116,7 +119,7 @@ func TestLinkedList_mergeSort_repair(t *testing.T) {
 				t.Fail()
 			}
 
-			remaining := tc.Enumerate(nil).ToSlice()
+			remaining := tc.Enumerate(context.Background()).ToSlice()
 
 			for _, desired := range originalElements {
 				found := false

@@ -1,6 +1,7 @@
 package collection
 
 import (
+	"context"
 	"sort"
 )
 
@@ -130,14 +131,14 @@ func (dict Dictionary) Size() int64 {
 }
 
 // Enumerate lists each word in the Dictionary alphabetically.
-func (dict Dictionary) Enumerate(cancel <-chan struct{}) Enumerator {
+func (dict Dictionary) Enumerate(ctx context.Context) Enumerator {
 	if dict.root == nil {
-		return Empty.Enumerate(cancel)
+		return Empty.Enumerate(ctx)
 	}
-	return dict.root.Enumerate(cancel)
+	return dict.root.Enumerate(ctx)
 }
 
-func (node trieNode) Enumerate(cancel <-chan struct{}) Enumerator {
+func (node trieNode) Enumerate(ctx context.Context) Enumerator {
 	var enumerateHelper func(trieNode, string)
 
 	results := make(chan interface{})
@@ -146,7 +147,7 @@ func (node trieNode) Enumerate(cancel <-chan struct{}) Enumerator {
 		if subject.IsWord {
 			select {
 			case results <- prefix:
-			case <-cancel:
+			case <-ctx.Done():
 				return
 			}
 		}

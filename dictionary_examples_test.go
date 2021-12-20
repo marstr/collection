@@ -1,6 +1,7 @@
 package collection_test
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -54,11 +55,11 @@ func ExampleDictionary_Enumerate() {
 		return strings.ToUpper(x.(string))
 	})
 
-	for word := range subject.Enumerate(nil) {
+	for word := range subject.Enumerate(context.Background()) {
 		fmt.Println(word)
 	}
 
-	for word := range upperCase.Enumerate(nil) {
+	for word := range upperCase.Enumerate(context.Background()) {
 		fmt.Println(word)
 	}
 

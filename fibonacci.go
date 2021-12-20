@@ -1,11 +1,13 @@
 package collection
 
+import "context"
+
 type fibonacciGenerator struct{}
 
 // Fibonacci is an Enumerable which will dynamically generate the fibonacci sequence.
 var Fibonacci Enumerable = fibonacciGenerator{}
 
-func (gen fibonacciGenerator) Enumerate(cancel <-chan struct{}) Enumerator {
+func (gen fibonacciGenerator) Enumerate(ctx context.Context) Enumerator {
 	retval := make(chan interface{})
 
 	go func() {
@@ -16,7 +18,7 @@ func (gen fibonacciGenerator) Enumerate(cancel <-chan struct{}) Enumerator {
 			select {
 			case retval <- a:
 				a, b = b, a+b
-			case <-cancel:
+			case <-ctx.Done():
 				return
 			}
 		}
