@@ -131,17 +131,17 @@ func (dict Dictionary) Size() int64 {
 }
 
 // Enumerate lists each word in the Dictionary alphabetically.
-func (dict Dictionary) Enumerate(ctx context.Context) Enumerator {
+func (dict Dictionary) Enumerate(ctx context.Context) Enumerator[string] {
 	if dict.root == nil {
-		return Empty.Enumerate(ctx)
+		return Empty[string]().Enumerate(ctx)
 	}
 	return dict.root.Enumerate(ctx)
 }
 
-func (node trieNode) Enumerate(ctx context.Context) Enumerator {
+func (node trieNode) Enumerate(ctx context.Context) Enumerator[string] {
 	var enumerateHelper func(trieNode, string)
 
-	results := make(chan interface{})
+	results := make(chan string)
 
 	enumerateHelper = func(subject trieNode, prefix string) {
 		if subject.IsWord {

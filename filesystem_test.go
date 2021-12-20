@@ -58,24 +58,16 @@ func ExampleDirectory_Enumerate() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	filesOfInterest := traverser.Enumerate(ctx).Select(func(subject interface{}) (result interface{}) {
-		cast, ok := subject.(string)
-		if ok {
-			result = path.Base(cast)
-		} else {
-			result = subject
-		}
-		return
-	}).Where(func(subject interface{}) bool {
-		cast, ok := subject.(string)
-		if !ok {
-			return false
-		}
-		return cast == "filesystem_test.go"
+	fileNames := Select[string](traverser, func(subject string) string {
+		return path.Base(subject)
 	})
 
-	for entry := range filesOfInterest {
-		fmt.Println(entry.(string))
+	filesOfInterest := Where(fileNames, func(subject string) bool {
+		return subject == "filesystem_test.go"
+	})
+
+	for entry := range filesOfInterest.Enumerate(ctx) {
+		fmt.Println(entry)
 	}
 
 	// Output: filesystem_test.go
@@ -93,45 +85,45 @@ func TestDirectory_Enumerate(t *testing.T) {
 		{
 			options: 0,
 			expected: map[string]struct{}{
-				filepath.Join("testdata", "foo", "a.txt"): struct{}{},
-				filepath.Join("testdata", "foo", "c.txt"): struct{}{},
-				filepath.Join("testdata", "foo", "bar"):   struct{}{},
+				filepath.Join("testdata", "foo", "a.txt"): {},
+				filepath.Join("testdata", "foo", "c.txt"): {},
+				filepath.Join("testdata", "foo", "bar"):   {},
 			},
 		},
 		{
 			options: DirectoryOptionsExcludeFiles,
 			expected: map[string]struct{}{
-				filepath.Join("testdata", "foo", "bar"): struct{}{},
+				filepath.Join("testdata", "foo", "bar"): {},
 			},
 		},
 		{
 			options: DirectoryOptionsExcludeDirectories,
 			expected: map[string]struct{}{
-				filepath.Join("testdata", "foo", "a.txt"): struct{}{},
-				filepath.Join("testdata", "foo", "c.txt"): struct{}{},
+				filepath.Join("testdata", "foo", "a.txt"): {},
+				filepath.Join("testdata", "foo", "c.txt"): {},
 			},
 		},
 		{
 			options: DirectoryOptionsRecursive,
 			expected: map[string]struct{}{
-				filepath.Join("testdata", "foo", "bar"):          struct{}{},
-				filepath.Join("testdata", "foo", "bar", "b.txt"): struct{}{},
-				filepath.Join("testdata", "foo", "a.txt"):        struct{}{},
-				filepath.Join("testdata", "foo", "c.txt"):        struct{}{},
+				filepath.Join("testdata", "foo", "bar"):          {},
+				filepath.Join("testdata", "foo", "bar", "b.txt"): {},
+				filepath.Join("testdata", "foo", "a.txt"):        {},
+				filepath.Join("testdata", "foo", "c.txt"):        {},
 			},
 		},
 		{
 			options: DirectoryOptionsExcludeFiles | DirectoryOptionsRecursive,
 			expected: map[string]struct{}{
-				filepath.Join("testdata", "foo", "bar"): struct{}{},
+				filepath.Join("testdata", "foo", "bar"): {},
 			},
 		},
 		{
 			options: DirectoryOptionsRecursive | DirectoryOptionsExcludeDirectories,
 			expected: map[string]struct{}{
-				filepath.Join("testdata", "foo", "a.txt"):        struct{}{},
-				filepath.Join("testdata", "foo", "bar", "b.txt"): struct{}{},
-				filepath.Join("testdata", "foo", "c.txt"):        struct{}{},
+				filepath.Join("testdata", "foo", "a.txt"):        {},
+				filepath.Join("testdata", "foo", "bar", "b.txt"): {},
+				filepath.Join("testdata", "foo", "c.txt"):        {},
 			},
 		},
 		{
@@ -148,12 +140,11 @@ func TestDirectory_Enumerate(t *testing.T) {
 		subject.Options = tc.options
 		t.Run(fmt.Sprintf("%d", uint(tc.options)), func(t *testing.T) {
 			for entry := range subject.Enumerate(context.Background()) {
-				cast := entry.(string)
-				if _, ok := tc.expected[cast]; !ok {
-					t.Logf("unexpected result: %q", cast)
+				if _, ok := tc.expected[entry]; !ok {
+					t.Logf("unexpected result: %q", entry)
 					t.Fail()
 				}
-				delete(tc.expected, cast)
+				delete(tc.expected, entry)
 			}
 
 			if len(tc.expected) != 0 {

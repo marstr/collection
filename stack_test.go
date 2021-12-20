@@ -6,7 +6,7 @@ import (
 )
 
 func TestStack_NewStack_FromEmpty(t *testing.T) {
-	subject := NewStack()
+	subject := NewStack[string]()
 	subject.Push("alfa")
 	subject.Push("bravo")
 	subject.Push("charlie")
@@ -42,7 +42,7 @@ func ExampleNewStack() {
 }
 
 func TestStack_Push_NonConstructor(t *testing.T) {
-	subject := &Stack{}
+	subject := &Stack[int]{}
 
 	sizeAssertion := func(want uint) {
 		if got := subject.Size(); got != want {
@@ -67,12 +67,12 @@ func TestStack_Push_NonConstructor(t *testing.T) {
 }
 
 func TestStack_Pop_NonConstructorEmpty(t *testing.T) {
-	subject := &Stack{}
+	subject := &Stack[string]{}
 
 	if result, ok := subject.Pop(); ok {
 		t.Logf("Pop should not have been okay")
 		t.Fail()
-	} else if result != nil {
+	} else if result != "" {
 		t.Logf("got: %v\nwant: %v", result, nil)
 	}
 }
