@@ -63,7 +63,10 @@ func (e emptyEnumerable[T]) Enumerate(ctx context.Context) Enumerator[T] {
 
 // All tests whether or not all items present in an Enumerable meet a criteria.
 func All[T any](subject Enumerable[T], p Predicate[T]) bool {
-	return subject.Enumerate(context.Background()).All(p)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	return subject.Enumerate(ctx).All(p)
 }
 
 // All tests whether or not all items present meet a criteria.
@@ -78,7 +81,10 @@ func (iter Enumerator[T]) All(p Predicate[T]) bool {
 
 // Any tests an Enumerable to see if there are any elements present.
 func Any[T any](iterator Enumerable[T]) bool {
-	for range iterator.Enumerate(context.Background()) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	for range iterator.Enumerate(ctx) {
 		return true
 	}
 	return false
@@ -88,6 +94,7 @@ func Any[T any](iterator Enumerable[T]) bool {
 func Anyp[T any](iterator Enumerable[T], p Predicate[T]) bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
 	for element := range iterator.Enumerate(ctx) {
 		if p(element) {
 			return true
@@ -126,8 +133,7 @@ func (iter Enumerator[T]) AsEnumerable() Enumerable[T] {
 	return EnumerableSlice[T](iter.ToSlice())
 }
 
-// Count iterates over a list and keeps a running tally of the number of elements
-// satisfy a predicate.
+// Count iterates over a list and keeps a running tally of the number of elements which satisfy a predicate.
 func Count[T any](iter Enumerable[T], p Predicate[T]) int {
 	return iter.Enumerate(context.Background()).Count(p)
 }
@@ -168,7 +174,10 @@ func (iter Enumerator[T]) Discard() {
 
 // ElementAt retreives an item at a particular position in an Enumerator.
 func ElementAt[T any](iter Enumerable[T], n uint) T {
-	return iter.Enumerate(context.Background()).ElementAt(n)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	return iter.Enumerate(ctx).ElementAt(n)
 }
 
 // ElementAt retreives an item at a particular position in an Enumerator.
@@ -181,10 +190,13 @@ func (iter Enumerator[T]) ElementAt(n uint) T {
 
 // First retrieves just the first item in the list, or returns an error if there are no elements in the array.
 func First[T any](subject Enumerable[T]) (retval T, err error) {
-	err = errNoElements
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
+	err = errNoElements
 	var isOpen bool
-	if retval, isOpen = <-subject.Enumerate(context.Background()); isOpen {
+
+	if retval, isOpen = <-subject.Enumerate(ctx); isOpen {
 		err = nil
 	}
 
@@ -429,10 +441,12 @@ func SelectMany[T any, E any](subject Enumerable[T], toMany Unfolder[T, E]) Enum
 
 // Single retreives the only element from a list, or returns nil and an error.
 func Single[T any](iter Enumerable[T]) (retval T, err error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	err = errNoElements
 
 	firstPass := true
-	for entry := range iter.Enumerate(context.Background()) {
+	for entry := range iter.Enumerate(ctx) {
 		if firstPass {
 			retval = entry
 			err = nil

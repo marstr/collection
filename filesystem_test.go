@@ -55,6 +55,9 @@ func ExampleDirectory_Enumerate() {
 		Options:  DirectoryOptionsExcludeDirectories,
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	fileNames := Select[string](traverser, func(subject string) string {
 		return path.Base(subject)
 	})
@@ -63,7 +66,7 @@ func ExampleDirectory_Enumerate() {
 		return subject == "filesystem_test.go"
 	})
 
-	for entry := range filesOfInterest.Enumerate(context.Background()) {
+	for entry := range filesOfInterest.Enumerate(ctx) {
 		fmt.Println(entry)
 	}
 

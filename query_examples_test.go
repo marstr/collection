@@ -54,7 +54,11 @@ func ExampleEnumerator_CountAll() {
 }
 
 func ExampleEnumerator_ElementAt() {
-	fmt.Print(collection.Fibonacci.Enumerate(context.Background()).ElementAt(4))
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	// ElementAt leaves the Enumerator open, creating a memory leak unless remediated,
+	// context.Context should be cancelled to indicate that no further reads are coming.
+	fmt.Print(collection.Fibonacci.Enumerate(ctx).ElementAt(4))
 	// Output: 3
 }
 
@@ -205,8 +209,11 @@ func ExampleEnumerator_Skip() {
 }
 
 func ExampleTake() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	taken := collection.Take(collection.Fibonacci, 4)
-	for entry := range taken.Enumerate(context.Background()) {
+	for entry := range taken.Enumerate(ctx) {
 		fmt.Println(entry)
 	}
 	// Output:
@@ -217,7 +224,10 @@ func ExampleTake() {
 }
 
 func ExampleEnumerator_Take() {
-	taken := collection.Fibonacci.Enumerate(context.Background()).Skip(4).Take(2)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	taken := collection.Fibonacci.Enumerate(ctx).Skip(4).Take(2)
 	for entry := range taken {
 		fmt.Println(entry)
 	}
@@ -230,7 +240,11 @@ func ExampleTakeWhile() {
 	taken := collection.TakeWhile(collection.Fibonacci, func(x, n uint) bool {
 		return x < 10
 	})
-	for entry := range taken.Enumerate(context.Background()) {
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	for entry := range taken.Enumerate(ctx) {
 		fmt.Println(entry)
 	}
 	// Output:
@@ -244,7 +258,9 @@ func ExampleTakeWhile() {
 }
 
 func ExampleEnumerator_TakeWhile() {
-	taken := collection.Fibonacci.Enumerate(context.Background()).TakeWhile(func(x, n uint) bool {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	taken := collection.Fibonacci.Enumerate(ctx).TakeWhile(func(x, n uint) bool {
 		return x < 6
 	})
 	for entry := range taken {
@@ -260,8 +276,11 @@ func ExampleEnumerator_TakeWhile() {
 }
 
 func ExampleEnumerator_Tee() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	base := collection.AsEnumerable(1, 2, 4)
-	left, right := base.Enumerate(context.Background()).Tee()
+	left, right := base.Enumerate(ctx).Tee()
 	var wg sync.WaitGroup
 	wg.Add(2)
 
