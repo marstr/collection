@@ -51,9 +51,7 @@ func ExampleDictionary_Enumerate() {
 	subject.Add("world")
 	subject.Add("hello")
 
-	upperCase := collection.Select[string](subject, func(x string) string {
-		return strings.ToUpper(x)
-	})
+	upperCase := collection.Select[string](subject, strings.ToUpper)
 
 	for word := range subject.Enumerate(context.Background()) {
 		fmt.Println(word)
