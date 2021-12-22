@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"path"
 	"path/filepath"
 	"testing"
 )
@@ -47,30 +46,6 @@ func TestEnumerateDirectoryOptions_UniqueBits(t *testing.T) {
 			t.Fail()
 		}
 	}
-}
-
-func ExampleDirectory_Enumerate() {
-	traverser := Directory{
-		Location: ".",
-		Options:  DirectoryOptionsExcludeDirectories,
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	fileNames := Select[string](traverser, func(subject string) string {
-		return path.Base(subject)
-	})
-
-	filesOfInterest := Where(fileNames, func(subject string) bool {
-		return subject == "filesystem_test.go"
-	})
-
-	for entry := range filesOfInterest.Enumerate(ctx) {
-		fmt.Println(entry)
-	}
-
-	// Output: filesystem_test.go
 }
 
 func TestDirectory_Enumerate(t *testing.T) {
