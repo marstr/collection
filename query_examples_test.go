@@ -128,7 +128,7 @@ func ExampleSelect() {
 	// Output: [1 2 3]
 }
 
-func ExampleEnumerator_SelectMany() {
+func ExampleSelectMany() {
 
 	type BrewHouse struct {
 		Name  string
