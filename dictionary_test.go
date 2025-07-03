@@ -40,9 +40,9 @@ func TestDictionary_Enumerate(t *testing.T) {
 
 			prev := ""
 			for result := range subject.Enumerate(context.Background()) {
-				t.Logf(result)
+				t.Log(result)
 				if alreadySeen, ok := expected[result]; !ok {
-					t.Logf("An unadded value was returned")
+					t.Log("An unadded value was returned")
 					t.Fail()
 				} else if alreadySeen {
 					t.Logf("\"%s\" was duplicated", result)
@@ -92,9 +92,9 @@ func TestTrieNode_Navigate(t *testing.T) {
 	}
 	subject := trieNode{
 		Children: map[rune]*trieNode{
-			'a': &trieNode{
+			'a': {
 				Children: map[rune]*trieNode{
-					'b': &trieNode{
+					'b': {
 						Children: map[rune]*trieNode{
 							'c': &leaf,
 						},

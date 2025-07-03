@@ -23,16 +23,12 @@ type Directory struct {
 	Options  DirectoryOptions
 }
 
-func defaultEnumeratePredicate(loc string, info os.FileInfo) bool {
-	return true
-}
-
 func (d Directory) applyOptions(loc string, info os.FileInfo) bool {
-	if info.IsDir() && 0 != (d.Options&DirectoryOptionsExcludeDirectories) {
+	if info.IsDir() && (d.Options&DirectoryOptionsExcludeDirectories) != 0 {
 		return false
 	}
 
-	if !info.IsDir() && 0 != d.Options&DirectoryOptionsExcludeFiles {
+	if !info.IsDir() && d.Options&DirectoryOptionsExcludeFiles != 0 {
 		return false
 	}
 
@@ -56,7 +52,7 @@ func (d Directory) Enumerate(ctx context.Context) Enumerator[string] {
 				return
 			}
 
-			if info.IsDir() && 0 == d.Options&DirectoryOptionsRecursive {
+			if info.IsDir() && d.Options&DirectoryOptionsRecursive == 0 {
 				err = filepath.SkipDir
 			}
 
@@ -75,4 +71,3 @@ func (d Directory) Enumerate(ctx context.Context) Enumerator[string] {
 
 	return results
 }
-

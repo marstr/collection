@@ -101,7 +101,7 @@ func (lru *LRUCache[K, V]) Enumerate(ctx context.Context) Enumerator[V] {
 		for entry := range nested {
 			select {
 			case retval <- entry.Value:
-				break
+				// Intentionally Left Blank
 			case <-ctx.Done():
 				return
 			}
@@ -125,7 +125,7 @@ func (lru *LRUCache[K, V]) EnumerateKeys(ctx context.Context) Enumerator[K] {
 		for entry := range nested {
 			select {
 			case retval <- entry.Key:
-				break
+				// Intentionally Left Blank
 			case <-ctx.Done():
 				return
 			}

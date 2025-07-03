@@ -113,7 +113,7 @@ func (f EnumerableSlice[T]) Enumerate(ctx context.Context) Enumerator[T] {
 		for _, entry := range f {
 			select {
 			case results <- entry:
-				break
+				// Intentionally Left Blank
 			case <-ctx.Done():
 				return
 			}
@@ -509,7 +509,7 @@ func (iter Enumerator[T]) Skip(n uint) Enumerator[T] {
 // splitN creates N Enumerators, each will be a subset of the original Enumerator and will have
 // distinct populations from one another.
 func splitN[T any, E any](iter Enumerator[T], operation Transform[T, E], n uint) []Enumerator[E] {
-	results, cast := make([]chan E, n, n), make([]Enumerator[E], n, n)
+	results, cast := make([]chan E, n), make([]Enumerator[E], n)
 
 	for i := uint(0); i < n; i++ {
 		results[i] = make(chan E)
