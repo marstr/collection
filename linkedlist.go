@@ -110,7 +110,7 @@ func (list *LinkedList[T]) Enumerate(ctx context.Context) Enumerator[T] {
 		for current != nil {
 			select {
 			case retval <- current.payload:
-				break
+				// Intentionally Left Blank
 			case <-ctx.Done():
 				return
 			}
@@ -185,7 +185,7 @@ func (list *LinkedList[T]) RemoveFront() (T, bool) {
 	list.first = list.first.next
 	list.length--
 
-	if 0 == list.length {
+	if list.length == 0 {
 		list.last = nil
 	}
 

@@ -47,7 +47,7 @@ func sleepIdentity[T any](val T) T {
 }
 
 func getInitializedSequentialArray[T ~int]() []T {
-	rawNums := make([]T, 1000, 1000)
+	rawNums := make([]T, 1000)
 	for i := range rawNums {
 		rawNums[i] = T(i + 1)
 	}

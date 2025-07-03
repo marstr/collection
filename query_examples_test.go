@@ -138,27 +138,27 @@ func ExampleSelectMany() {
 	breweries := collection.AsEnumerable(
 		BrewHouse{
 			"Mac & Jacks",
-			collection.AsEnumerable[string](
+			collection.AsEnumerable(
 				"African Amber",
 				"Ibis IPA",
 			),
 		},
 		BrewHouse{
 			"Post Doc",
-			collection.AsEnumerable[string](
+			collection.AsEnumerable(
 				"Prereq Pale",
 			),
 		},
 		BrewHouse{
 			"Resonate",
-			collection.AsEnumerable[string](
+			collection.AsEnumerable(
 				"Comfortably Numb IPA",
 				"Lithium Altbier",
 			),
 		},
 		BrewHouse{
 			"Triplehorn",
-			collection.AsEnumerable[string](
+			collection.AsEnumerable(
 				"Samson",
 				"Pepper Belly",
 			),
@@ -311,7 +311,7 @@ func ExampleEnumerator_Tee() {
 
 func ExampleUCount() {
 	subject := collection.NewStack[any](9, 'a', "str1")
-	result := collection.UCount[any](subject, func(a interface{}) bool {
+	result := collection.UCount[interface{}](subject, func(a interface{}) bool {
 		_, ok := a.(string)
 		return ok
 	})

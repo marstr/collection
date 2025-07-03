@@ -50,7 +50,7 @@ func (l *List[T]) Enumerate(ctx context.Context) Enumerator[T] {
 		for _, entry := range l.underlyer {
 			select {
 			case retval <- entry:
-				break
+				// Intentionally Left Blank
 			case <-ctx.Done():
 				return
 			}
@@ -77,7 +77,7 @@ func (l *List[T]) Get(pos uint) (T, bool) {
 func (l *List[T]) IsEmpty() bool {
 	l.key.RLock()
 	defer l.key.RUnlock()
-	return 0 == len(l.underlyer)
+	return len(l.underlyer) == 0
 }
 
 // Length returns the number of elements in the List.
