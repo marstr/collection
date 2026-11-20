@@ -15,7 +15,8 @@ func ExampleNewDictionaryFromEnumerable() {
 	source := collection.AsEnumerable("world", "hello", "hello")
 	dict, err := collection.NewDictionaryFromEnumerable(ctx, source)
 	if err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, err)
+		return
 	}
 	for word := range dict.Enumerate(ctx) {
 		fmt.Println(word)
@@ -30,7 +31,8 @@ func ExampleNewDictionaryFromReader() {
 	source := strings.NewReader("world\nhello there\nworld")
 	dict, err := collection.NewDictionaryFromReader(ctx, source)
 	if err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, err)
+		return
 	}
 	for word := range dict.Enumerate(ctx) {
 		fmt.Println(word)
@@ -43,17 +45,20 @@ func ExampleNewDictionaryFromReader() {
 func ExampleNewDictionaryFromFilename() {
 	directory, err := os.MkdirTemp("", "dictionary-example-*")
 	if err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, err)
+		return
 	}
 	defer os.RemoveAll(directory)
 	filename := filepath.Join(directory, "words.txt")
 	if err := os.WriteFile(filename, []byte("world\nhello\nworld\n"), 0600); err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, err)
+		return
 	}
 	ctx := context.Background()
 	dict, err := collection.NewDictionaryFromFilename(ctx, filename)
 	if err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, err)
+		return
 	}
 	for word := range dict.Enumerate(ctx) {
 		fmt.Println(word)
