@@ -1,8 +1,12 @@
 package collection
 
 import (
+	"bufio"
 	"context"
+	"io"
+	"os"
 	"sort"
+	"strings"
 )
 
 type trieNode struct {
@@ -41,6 +45,76 @@ func (node *trieNode) Navigate(word string) *trieNode {
 type Dictionary struct {
 	root *trieNode
 	size int64
+}
+
+// NewDictionaryFromEnumerable reads all strings from another source, and creates a new dictionary with
+// each entry from the other.
+// If ctx is canceled, it returns nil and ctx.Err().
+func NewDictionaryFromEnumerable(ctx context.Context, enumerable Enumerable[string]) (*Dictionary, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	retval := &Dictionary{}
+	entries := enumerable.Enumerate(ctx)
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case entry, ok := <-entries:
+			if err := ctx.Err(); err != nil {
+				return nil, err
+			}
+			if !ok {
+				return retval, nil
+			}
+			retval.Add(entry)
+		}
+	}
+}
+
+// NewDictionaryFromReader reads from an io.Reader and adds each line as an entry in a new dictionary.
+// Line endings (LF or CRLF) are removed; blank lines and other whitespace are preserved.
+// On a read error or cancellation, it returns nil and the error. Cancellation is checked
+// between reads but cannot interrupt a blocked Read call.
+func NewDictionaryFromReader(ctx context.Context, reader io.Reader) (*Dictionary, error) {
+	retval := &Dictionary{}
+	lines := bufio.NewReader(reader)
+
+	for {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
+		line, err := lines.ReadString('\n')
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+		if len(line) > 0 {
+			if strings.HasSuffix(line, "\n") {
+				line = strings.TrimSuffix(line, "\n")
+				line = strings.TrimSuffix(line, "\r")
+			}
+			retval.Add(line)
+		}
+		if err == io.EOF {
+			return retval, nil
+		}
+	}
+}
+
+// NewDictionaryFromFilename opens a file to read, then adds each line as an entry in a new dictionary.
+// The file is closed before returning. Line handling and cancellation follow NewDictionaryFromReader.
+func NewDictionaryFromFilename(ctx context.Context, filename string) (*Dictionary, error) {
+	handle, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer handle.Close()
+
+	return NewDictionaryFromReader(ctx, handle)
 }
 
 // Add inserts a word into the dictionary, and returns whether or not that word was a new word.
